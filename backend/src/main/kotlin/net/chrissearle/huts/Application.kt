@@ -12,6 +12,7 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.routing.routing
 import net.chrissearle.huts.config.DatabaseConfig
 import net.chrissearle.huts.config.runMigrations
+import net.chrissearle.huts.monitoring.configureMonitoring
 import net.chrissearle.huts.repository.BookingRepository
 import net.chrissearle.huts.routes.authRoutes
 import net.chrissearle.huts.routes.bookingRoutes
@@ -34,6 +35,8 @@ fun Application.module() {
     // frontend proxies /api, /login, /callback and /logout to this backend over
     // the in-cluster service address, so this is same-origin as far as the browser
     // (and Keycloak's redirect_uri validation) is concerned.
+
+    configureMonitoring()
 
     install(ContentNegotiation) {
         json()

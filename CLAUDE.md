@@ -104,6 +104,15 @@ GUI text should be in **Bokmål Norwegian**.
 - Local dev: docker-compose, configured via `local.env`.
 - Production: CNPG (CloudNativePG) on cluster.
 
+## Monitoring
+
+The backend exposes Prometheus metrics at `GET /metrics` (JVM memory/GC,
+CPU, and Ktor HTTP request histograms via Micrometer), plus request-scoped
+call logging with an `X-Request-Id`-based call ID for log correlation. Pattern
+copied from `src/proxy`'s `Monitoring.kt`. `/metrics` is scraped in-cluster
+directly against the backend pod — it is **not** proxied through the
+frontend, unlike `/api`, `/login`, `/callback` and `/logout`.
+
 ## Auth architecture (Keycloak)
 
 The browser only ever talks to the **frontend**'s origin. The backend has no
