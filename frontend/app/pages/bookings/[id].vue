@@ -13,7 +13,7 @@ useSeoMeta({
 // Two statuses today (OPEN/APPROVED) but admin notes and future statuses
 // (e.g. a rejected/cancelled state) may want distinct colors later — your
 // call on how much to generalize now vs. keep it a simple two-way branch.
-function statusBadge(bookingStatus: string): { label: string, color: 'success' | 'warning' } {
+function statusBadge(bookingStatus: string): { label: string; color: 'success' | 'warning' } {
   return bookingStatus === 'APPROVED'
     ? { label: 'Godkjent', color: 'success' }
     : { label: 'Forespurt', color: 'warning' }
@@ -22,10 +22,7 @@ function statusBadge(bookingStatus: string): { label: string, color: 'success' |
 
 <template>
   <div class="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-    <NuxtLink
-      to="/"
-      class="text-sm text-ember-600 hover:underline dark:text-ember-400"
-    >
+    <NuxtLink to="/" class="text-sm text-ember-600 hover:underline dark:text-ember-400">
       ← Tilbake til kalenderen
     </NuxtLink>
 
@@ -45,27 +42,19 @@ function statusBadge(bookingStatus: string): { label: string, color: 'success' |
       Henter booking …
     </div>
 
-    <div
-      v-else-if="booking"
-      class="mt-4"
-    >
+    <div v-else-if="booking" class="mt-4">
       <div class="mb-4 flex items-center justify-between">
         <h1 class="font-display text-2xl text-forest-900 dark:text-birch-50">
           {{ booking.hutName }}
         </h1>
-        <UBadge
-          :color="statusBadge(booking.status).color"
-          variant="subtle"
-        >
+        <UBadge :color="statusBadge(booking.status).color" variant="subtle">
           {{ statusBadge(booking.status).label }}
         </UBadge>
       </div>
 
       <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <dt class="text-xs uppercase tracking-wide text-forest-500 dark:text-birch-400">
-            Navn
-          </dt>
+          <dt class="text-xs uppercase tracking-wide text-forest-500 dark:text-birch-400">Navn</dt>
           <dd class="mt-1 text-forest-800 dark:text-birch-100">
             {{ booking.name }}
           </dd>
@@ -99,10 +88,7 @@ function statusBadge(bookingStatus: string): { label: string, color: 'success' |
         </div>
       </dl>
 
-      <div
-        v-if="booking.adminNotes"
-        class="mt-6"
-      >
+      <div v-if="booking.adminNotes" class="mt-6">
         <dt class="text-xs uppercase tracking-wide text-forest-500 dark:text-birch-400">
           Notater fra admin
         </dt>

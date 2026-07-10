@@ -19,12 +19,14 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2026-06-30',
 
+  // Formatting is owned entirely by Prettier (.prettierrc.json). ESLint's
+  // stylistic layer is disabled here because it duplicates and conflicts with
+  // Prettier's own formatting decisions (e.g. vue attribute wrapping) — with
+  // both enabled, `eslint --fix` and `prettier --write` fight and neither
+  // command converges to a passing state on its own.
   eslint: {
     config: {
-      stylistic: {
-        commaDangle: 'never',
-        braceStyle: '1tbs'
-      }
+      stylistic: false
     }
   }
 })
