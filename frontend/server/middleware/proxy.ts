@@ -7,7 +7,7 @@ import { defineEventHandler, readRawBody, send, setResponseStatus } from 'h3'
 const backend = process.env.NUXT_BACKEND_URL || 'http://localhost:8080'
 
 const shouldProxy = (url: string) =>
-  url.startsWith('/api') ||
+  (url.startsWith('/api') && !url.startsWith('/api/_')) ||
   url.startsWith('/login') ||
   url.startsWith('/callback') ||
   url.startsWith('/logout')
