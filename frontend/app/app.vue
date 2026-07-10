@@ -18,6 +18,7 @@ useHead({
       </template>
 
       <template #right>
+        <UButton to="/bookings/new" size="sm" variant="soft">Ny booking</UButton>
         <UColorModeButton />
       </template>
     </UHeader>

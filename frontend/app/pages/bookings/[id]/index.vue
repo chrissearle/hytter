@@ -3,6 +3,13 @@ const route = useRoute()
 const id = route.params.id as string
 
 const { data: booking, status, error } = useBooking(id)
+const { data: session } = useSession()
+
+const canEdit = computed(
+  () =>
+    session.value?.isAdmin ||
+    (session.value?.authenticated && session.value.name === booking.value?.createdBy)
+)
 
 useSeoMeta({
   title: 'Hytter — Booking',
@@ -47,9 +54,14 @@ function statusBadge(bookingStatus: string): { label: string; color: 'success' |
         <h1 class="font-display text-2xl text-forest-900 dark:text-birch-50">
           {{ booking.hutName }}
         </h1>
-        <UBadge :color="statusBadge(booking.status).color" variant="subtle">
-          {{ statusBadge(booking.status).label }}
-        </UBadge>
+        <div class="flex items-center gap-3">
+          <UBadge :color="statusBadge(booking.status).color" variant="subtle">
+            {{ statusBadge(booking.status).label }}
+          </UBadge>
+          <UButton v-if="canEdit" :to="`/bookings/${booking.id}/edit`" size="sm" variant="soft">
+            Rediger
+          </UButton>
+        </div>
       </div>
 
       <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">

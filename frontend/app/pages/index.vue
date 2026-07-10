@@ -1,9 +1,5 @@
 <script setup lang="ts">
-const huts = [
-  { id: 1, name: 'Huldrebakken' },
-  { id: 2, name: 'Trollhaugen' },
-  { id: 3, name: 'Tent/hengekøye' }
-]
+const huts = useHuts()
 
 const year = new Date().getFullYear()
 const seasonStart = `${year}-06-01`

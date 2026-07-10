@@ -64,6 +64,20 @@ data class InvalidDateRange(
     override val response = ErrorResponse(status = HttpStatusCode.BadRequest, message = reason)
 }
 
+data object NameRequired : RequiredField(fieldName = "name")
+
+data object InvalidNumberOfPeople : ApiError {
+    override val response =
+        ErrorResponse(status = HttpStatusCode.BadRequest, message = "numberOfPeople must be greater than 0")
+}
+
+data object HutRequired : RequiredField(fieldName = "hutId")
+
+data object NotBookingOwner : ApiError {
+    override val response =
+        ErrorResponse(status = HttpStatusCode.Forbidden, message = "You may only edit your own bookings")
+}
+
 data class VersionNotReadable(
     val e: Throwable,
 ) : ApiError {

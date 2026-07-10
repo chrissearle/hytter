@@ -20,4 +20,19 @@ export interface Booking {
   departureDate: string
   adminNotes: string | null
   status: BookingStatus
+  createdBy: string | null
+}
+
+export interface BookingInput {
+  name: string
+  numberOfPeople: number
+  hutId: number
+  arrivalDate: string
+  departureDate: string
+}
+
+export interface Session {
+  authenticated: boolean
+  name: string | null
+  isAdmin: boolean
 }
