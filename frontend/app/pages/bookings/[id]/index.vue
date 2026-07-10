@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const route = useRoute()
+const router = useRouter()
 const id = route.params.id as string
 
 const { data: booking, status, error } = useBooking(id)
@@ -11,10 +12,42 @@ const canEdit = computed(
     (session.value?.authenticated && session.value.name === booking.value?.createdBy)
 )
 
+const actionError = ref<string | null>(null)
+const approving = ref(false)
+const deleting = ref(false)
+
 useSeoMeta({
   title: 'Hytter — Booking',
   description: 'Detaljer for en hytte-booking.'
 })
+
+async function onApprove() {
+  approving.value = true
+  actionError.value = null
+  try {
+    await $fetch(`/api/bookings/${id}/approve`, { method: 'POST' })
+    await clearNuxtData([bookingCacheKey(id), BOOKINGS_CACHE_KEY])
+    await refreshNuxtData(bookingCacheKey(id))
+  } catch {
+    actionError.value = 'Klarte ikke å godkjenne booking.'
+  } finally {
+    approving.value = false
+  }
+}
+
+async function onDelete() {
+  if (!confirm('Er du sikker på at du vil slette denne bookingen?')) return
+  deleting.value = true
+  actionError.value = null
+  try {
+    await $fetch(`/api/bookings/${id}`, { method: 'DELETE' })
+    await clearNuxtData(BOOKINGS_CACHE_KEY)
+    await router.push('/')
+  } catch {
+    actionError.value = 'Klarte ikke å slette booking.'
+    deleting.value = false
+  }
+}
 
 // TODO(user): map a booking status to a display label + UColor for the badge.
 // Two statuses today (OPEN/APPROVED) but admin notes and future statuses
@@ -50,6 +83,15 @@ function statusBadge(bookingStatus: string): { label: string; color: 'success' |
     </div>
 
     <div v-else-if="booking" class="mt-4">
+      <UAlert
+        v-if="actionError"
+        color="error"
+        variant="subtle"
+        title="Noe gikk galt"
+        :description="actionError"
+        class="mb-4"
+      />
+
       <div class="mb-4 flex items-center justify-between">
         <h1 class="font-display text-2xl text-forest-900 dark:text-birch-50">
           {{ booking.hutName }}
@@ -60,6 +102,26 @@ function statusBadge(bookingStatus: string): { label: string; color: 'success' |
           </UBadge>
           <UButton v-if="canEdit" :to="`/bookings/${booking.id}/edit`" size="sm" variant="soft">
             Rediger
+          </UButton>
+          <UButton
+            v-if="session?.isAdmin && booking.status === 'OPEN'"
+            size="sm"
+            variant="soft"
+            color="success"
+            :loading="approving"
+            @click="onApprove"
+          >
+            Godkjenn
+          </UButton>
+          <UButton
+            v-if="session?.isAdmin"
+            size="sm"
+            variant="soft"
+            color="error"
+            :loading="deleting"
+            @click="onDelete"
+          >
+            Slett
           </UButton>
         </div>
       </div>

@@ -58,6 +58,10 @@ private const val UPDATE_SQL =
     WHERE id = ?
     """
 
+private const val APPROVE_SQL = "UPDATE bookings SET status = 'APPROVED', updated_at = now() WHERE id = ?"
+
+private const val DELETE_SQL = "DELETE FROM bookings WHERE id = ?"
+
 class BookingRepository(
     private val dataSource: DataSource,
 ) {
@@ -156,6 +160,26 @@ class BookingRepository(
                 connection.prepareStatement(UPDATE_SQL).use { statement ->
                     statement.bindInput(input)
                     statement.setInt(PARAM_SIXTH, id)
+                    statement.executeUpdate()
+                }
+            }
+        }
+
+    suspend fun approve(id: Int): Int =
+        withContext(Dispatchers.IO) {
+            dataSource.connection.use { connection ->
+                connection.prepareStatement(APPROVE_SQL).use { statement ->
+                    statement.setInt(1, id)
+                    statement.executeUpdate()
+                }
+            }
+        }
+
+    suspend fun delete(id: Int): Int =
+        withContext(Dispatchers.IO) {
+            dataSource.connection.use { connection ->
+                connection.prepareStatement(DELETE_SQL).use { statement ->
+                    statement.setInt(1, id)
                     statement.executeUpdate()
                 }
             }

@@ -39,6 +39,7 @@ fun Route.bookingRoutes(repository: BookingRepository) {
         sessionRoute()
         createBookingRoute(repository)
         updateBookingRoute(repository)
+        bookingAdminRoutes(repository)
     }
 }
 

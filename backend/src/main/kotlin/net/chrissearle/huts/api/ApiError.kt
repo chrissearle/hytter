@@ -78,6 +78,10 @@ data object NotBookingOwner : ApiError {
         ErrorResponse(status = HttpStatusCode.Forbidden, message = "You may only edit your own bookings")
 }
 
+data object AdminRequired : ApiError {
+    override val response = ErrorResponse(status = HttpStatusCode.Forbidden, message = "Admin role required")
+}
+
 data class VersionNotReadable(
     val e: Throwable,
 ) : ApiError {
