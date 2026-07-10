@@ -13,12 +13,9 @@ export default defineNuxtConfig({
     fallback: 'dark'
   },
 
-  runtimeConfig: {
-    public: {
-      // Overridable via NUXT_PUBLIC_API_BASE
-      apiBase: 'http://localhost:8080'
-    }
-  },
+  // Backend address used only by server/middleware/proxy.ts (server-side, never
+  // sent to the browser). Set NUXT_BACKEND_URL in each environment, e.g. the
+  // in-cluster service address in production.
 
   compatibilityDate: '2026-06-30',
 
