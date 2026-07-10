@@ -9,3 +9,15 @@ export interface BookingSummary {
   departureDate: string
   status: BookingStatus
 }
+
+export interface Booking {
+  id: number
+  name: string
+  numberOfPeople: number
+  hutId: number
+  hutName: string
+  arrivalDate: string
+  departureDate: string
+  adminNotes: string | null
+  status: BookingStatus
+}

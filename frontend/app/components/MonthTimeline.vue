@@ -105,10 +105,11 @@ const dayWidthRem = 1.7
             :style="{ left: `calc(${todayIndex} * var(--day-w))` }"
           />
 
-          <div
+          <NuxtLink
             v-for="{ booking, startIndex, span } in blocksForHut(hut.id)"
             :key="booking.id"
-            class="absolute top-1 flex h-8 items-center truncate rounded-md px-2 text-xs font-medium shadow-sm"
+            :to="`/bookings/${booking.id}`"
+            class="absolute top-1 flex h-8 items-center truncate rounded-md px-2 text-xs font-medium shadow-sm transition hover:brightness-95"
             :class="
               booking.status === 'APPROVED'
                 ? 'bg-ember-500 text-birch-50'
@@ -121,7 +122,7 @@ const dayWidthRem = 1.7
             :title="`${booking.name} · ${booking.arrivalDate} – ${booking.departureDate}`"
           >
             {{ booking.name }}
-          </div>
+          </NuxtLink>
         </div>
       </div>
     </div>

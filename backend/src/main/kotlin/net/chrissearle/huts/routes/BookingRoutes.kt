@@ -9,6 +9,7 @@ import io.ktor.server.routing.get
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
+import net.chrissearle.huts.api.BookingNotFound
 import net.chrissearle.huts.api.DatabaseCallFailed
 import net.chrissearle.huts.api.ErrorResponse
 import net.chrissearle.huts.api.InvalidDateRange
@@ -43,6 +44,24 @@ fun Route.bookingRoutes(repository: BookingRepository) {
                         )
                     raise(DatabaseCallFailed(error))
                 }
+            }.respond()
+        }
+
+        get("/api/bookings/{id}") {
+            val id = call.parameters["id"]?.toIntOrNull()
+
+            either {
+                if (id == null) {
+                    raise(BookingNotFound(-1))
+                }
+                catch({ repository.findById(id) }) { e: SQLException ->
+                    val error =
+                        ErrorResponse(
+                            status = HttpStatusCode.InternalServerError,
+                            message = e.message ?: "database error",
+                        )
+                    raise(DatabaseCallFailed(error))
+                } ?: raise(BookingNotFound(id))
             }.respond()
         }
     }

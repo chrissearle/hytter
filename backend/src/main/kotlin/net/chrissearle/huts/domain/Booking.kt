@@ -9,6 +9,7 @@ data class Booking(
     val name: String,
     val numberOfPeople: Int,
     val hutId: Int,
+    val hutName: String,
     val arrivalDate: LocalDate,
     val departureDate: LocalDate,
     val adminNotes: String?,
