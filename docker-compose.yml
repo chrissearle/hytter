@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:18
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: hytter
+      POSTGRES_USER: hytter
+      POSTGRES_PASSWORD: hytter
+    volumes:
+      - hytter-postgres-data:/var/lib/postgresql
+
+volumes:
+  hytter-postgres-data:
