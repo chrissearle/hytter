@@ -1,18 +1,56 @@
-@import "tailwindcss";
-@import "@nuxt/ui";
+@import 'tailwindcss';
+@import '@nuxt/ui';
 
 @theme static {
   --font-sans: 'Public Sans', sans-serif;
+  --font-display: 'Fraunces', 'Public Sans', serif;
 
-  --color-green-50: #EFFDF5;
-  --color-green-100: #D9FBE8;
-  --color-green-200: #B3F5D1;
-  --color-green-300: #75EDAE;
-  --color-green-400: #00DC82;
-  --color-green-500: #00C16A;
-  --color-green-600: #00A155;
-  --color-green-700: #007F45;
-  --color-green-800: #016538;
-  --color-green-900: #0A5331;
-  --color-green-950: #052E16;
+  /* Forest — primary, used for chrome, huts, and structure */
+  --color-forest-50: #eef3ee;
+  --color-forest-100: #d7e3d6;
+  --color-forest-200: #b0c7ae;
+  --color-forest-300: #86a983;
+  --color-forest-400: #5f8a5c;
+  --color-forest-500: #436a41;
+  --color-forest-600: #3a5f38;
+  --color-forest-700: #2d4a2a;
+  --color-forest-800: #233a21;
+  --color-forest-900: #1a2c19;
+  --color-forest-950: #101c0f;
+
+  /* Ember — approved bookings, the one warm accent */
+  --color-ember-50: #fdf3ec;
+  --color-ember-100: #f9e0cc;
+  --color-ember-200: #f2c193;
+  --color-ember-300: #e89f5e;
+  --color-ember-400: #dd813a;
+  --color-ember-500: #c96a27;
+  --color-ember-600: #a3541e;
+  --color-ember-700: #7c3f18;
+  --color-ember-800: #582d13;
+  --color-ember-900: #3b1f0d;
+  --color-ember-950: #24130a;
+
+  /* Birch — warm neutral background */
+  --color-birch-50: #faf7f0;
+  --color-birch-100: #f4eee1;
+  --color-birch-200: #e8ddc7;
+  --color-birch-300: #d8c8a5;
+  --color-birch-400: #c2ab7d;
+  --color-birch-500: #a68d5e;
+  --color-birch-600: #8a734a;
+  --color-birch-700: #6b593a;
+  --color-birch-800: #4a3d29;
+  --color-birch-900: #2f271a;
+  --color-birch-950: #1b160f;
+}
+
+:root {
+  --ui-bg: var(--color-birch-50);
+  --ui-text: var(--color-forest-900);
+}
+
+.dark {
+  --ui-bg: #131a13;
+  --ui-text: var(--color-birch-100);
 }

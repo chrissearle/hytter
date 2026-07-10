@@ -1,5 +1,11 @@
 package net.chrissearle.huts.config
 
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
+import javax.sql.DataSource
+
+private const val MAX_POOL_SIZE = 10
+
 data class DatabaseConfig(
     val host: String,
     val port: Int,
@@ -9,6 +15,16 @@ data class DatabaseConfig(
 ) {
     val jdbcUrl: String
         get() = "jdbc:postgresql://$host:$port/$name"
+
+    fun dataSource(): DataSource =
+        HikariDataSource(
+            HikariConfig().apply {
+                jdbcUrl = this@DatabaseConfig.jdbcUrl
+                username = user
+                password = this@DatabaseConfig.password
+                maximumPoolSize = MAX_POOL_SIZE
+            },
+        )
 
     companion object {
         fun fromEnv(): DatabaseConfig =

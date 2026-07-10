@@ -1,76 +1,72 @@
+<script setup lang="ts">
+const huts = [
+  { id: 1, name: 'Huldrebakken' },
+  { id: 2, name: 'Trollhaugen' },
+  { id: 3, name: 'Tent/hengekøye' }
+]
+
+const year = new Date().getFullYear()
+const seasonStart = `${year}-06-01`
+const seasonEnd = `${year}-08-31`
+
+const { data: bookings, status, error } = useBookings(seasonStart, seasonEnd)
+
+useSeoMeta({
+  title: 'Hytter — Booking-kalender',
+  description: 'Se ledige og reserverte datoer for Huldrebakken, Trollhaugen og telt/hengekøye.'
+})
+</script>
+
 <template>
-  <div>
-    <UPageHero
-      title="Nuxt Starter Template"
-      description="A production-ready starter template powered by Nuxt UI. Build beautiful, accessible, and performant applications in minutes, not hours."
-      :links="[{
-        label: 'Get started',
-        to: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
-        target: '_blank',
-        trailingIcon: 'i-lucide-arrow-right',
-        size: 'xl'
-      }, {
-        label: 'Use this template',
-        to: 'https://github.com/nuxt-ui-templates/starter',
-        target: '_blank',
-        icon: 'i-simple-icons-github',
-        size: 'xl',
-        color: 'neutral',
-        variant: 'subtle'
-      }]"
+  <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+    <header class="mb-6">
+      <p class="font-display text-sm uppercase tracking-[0.2em] text-ember-600 dark:text-ember-400">
+        Sesong {{ year }}
+      </p>
+      <h1 class="mt-1 font-display text-3xl text-forest-900 dark:text-birch-50">
+        Booking-kalender
+      </h1>
+      <p class="mt-2 max-w-2xl text-sm text-forest-700 dark:text-birch-300">
+        Oversikt over ønskede og godkjente opphold på hyttene, 1. juni – 31. august. Fylte felt er
+        godkjent, stiplede felt er under vurdering.
+      </p>
+    </header>
+
+    <UAlert
+      v-if="error"
+      color="error"
+      variant="subtle"
+      title="Klarte ikke å hente bookinger"
+      :description="error.message"
+      class="mb-4"
     />
 
-    <UPageSection
-      id="features"
-      title="Everything you need to build modern Nuxt apps"
-      description="Start with a solid foundation. This template includes all the essentials for building production-ready applications with Nuxt UI's powerful component system."
-      :features="[{
-        icon: 'i-lucide-rocket',
-        title: 'Production-ready from day one',
-        description: 'Pre-configured with TypeScript, ESLint, Tailwind CSS, and all the best practices. Focus on building features, not setting up tooling.'
-      }, {
-        icon: 'i-lucide-palette',
-        title: 'Beautiful by default',
-        description: 'Leveraging Nuxt UI\'s design system with automatic dark mode, consistent spacing, and polished components that look great out of the box.'
-      }, {
-        icon: 'i-lucide-zap',
-        title: 'Lightning fast',
-        description: 'Optimized for performance with SSR/SSG support, automatic code splitting, and edge-ready deployment. Your users will love the speed.'
-      }, {
-        icon: 'i-lucide-blocks',
-        title: '100+ components included',
-        description: 'Access Nuxt UI\'s comprehensive component library. From forms to navigation, everything is accessible, responsive, and customizable.'
-      }, {
-        icon: 'i-lucide-code-2',
-        title: 'Developer experience first',
-        description: 'Auto-imports, hot module replacement, and TypeScript support. Write less boilerplate and ship more features.'
-      }, {
-        icon: 'i-lucide-shield-check',
-        title: 'Built for scale',
-        description: 'Enterprise-ready architecture with proper error handling, SEO optimization, and security best practices built-in.'
-      }]"
+    <div
+      v-else-if="status === 'pending'"
+      class="flex h-40 items-center justify-center text-sm text-forest-500"
+    >
+      Henter bookinger …
+    </div>
+
+    <HutTimeline
+      v-else
+      :huts="huts"
+      :bookings="bookings ?? []"
+      :season-start="seasonStart"
+      :season-end="seasonEnd"
     />
 
-    <UPageSection>
-      <UPageCTA
-        title="Ready to build your next Nuxt app?"
-        description="Join thousands of developers building with Nuxt and Nuxt UI. Get this template and start shipping today."
-        variant="subtle"
-        :links="[{
-          label: 'Start building',
-          to: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
-          target: '_blank',
-          trailingIcon: 'i-lucide-arrow-right',
-          color: 'neutral'
-        }, {
-          label: 'View on GitHub',
-          to: 'https://github.com/nuxt-ui-templates/starter',
-          target: '_blank',
-          icon: 'i-simple-icons-github',
-          color: 'neutral',
-          variant: 'outline'
-        }]"
-      />
-    </UPageSection>
+    <div class="mt-4 flex flex-wrap items-center gap-4 text-xs text-forest-600 dark:text-birch-300">
+      <span class="flex items-center gap-1.5">
+        <span class="h-3 w-3 rounded-sm bg-ember-500" /> Godkjent
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span
+          class="h-3 w-3 rounded-sm border border-dashed border-forest-400 bg-forest-50 dark:bg-forest-900"
+        />
+        Forespurt
+      </span>
+      <span class="flex items-center gap-1.5"> <span class="h-3 w-px bg-ember-500" /> I dag </span>
+    </div>
   </div>
 </template>
