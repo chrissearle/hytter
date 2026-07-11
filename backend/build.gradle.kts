@@ -36,6 +36,15 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.hikari)
     implementation(libs.arrow.core)
+
+    testImplementation(libs.bundles.test)
+    testImplementation(libs.testcontainers.core)
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.testcontainers.junit.jupiter)
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
 
 application {

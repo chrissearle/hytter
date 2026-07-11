@@ -12,6 +12,9 @@ arrow = "2.2.1"
 kotlinx-serialization = "1.9.0"
 kotlin-logging = "8.0.4"
 prometheus = "1.17.0"
+kotest = "6.2.1"
+mockk = "1.14.11"
+testcontainers = "2.0.5"
 
 [libraries]
 ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
@@ -36,6 +39,25 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
+ktor-server-test-host = { module = "io.ktor:ktor-server-test-host-jvm", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock-jvm", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation-jvm", version.ref = "ktor" }
+kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+testcontainers-core = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
+testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainers" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter", version.ref = "testcontainers" }
+
+[bundles]
+test = [
+    "ktor-server-test-host",
+    "ktor-client-mock",
+    "ktor-client-content-negotiation",
+    "kotest-runner-junit5",
+    "kotest-assertions-core",
+    "mockk",
+]
 
 [plugins]
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

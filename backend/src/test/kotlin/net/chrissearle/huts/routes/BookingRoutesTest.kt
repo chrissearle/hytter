@@ -1,0 +1,254 @@
+package net.chrissearle.huts.routes
+
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
+import io.ktor.client.call.body
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.routing.routing
+import io.ktor.server.testing.testApplication
+import io.mockk.coEvery
+import io.mockk.mockk
+import kotlinx.datetime.LocalDate
+import net.chrissearle.huts.TEST_PRINCIPAL_HEADER
+import net.chrissearle.huts.domain.Booking
+import net.chrissearle.huts.domain.BookingInput
+import net.chrissearle.huts.domain.BookingStatus
+import net.chrissearle.huts.repository.BookingRepository
+import net.chrissearle.huts.testHytterApplication
+
+private fun sampleBooking(
+    id: Int = 1,
+    createdBy: String? = "Some User",
+    status: BookingStatus = BookingStatus.OPEN,
+) = Booking(
+    id = id,
+    name = "Opphavet",
+    numberOfPeople = 2,
+    hutId = 1,
+    hutName = "Huldrebakken",
+    arrivalDate = LocalDate(2026, 6, 1),
+    departureDate = LocalDate(2026, 6, 5),
+    adminNotes = null,
+    status = status,
+    createdBy = createdBy,
+)
+
+private fun sampleInput() =
+    BookingInput(
+        name = "Opphavet",
+        numberOfPeople = 2,
+        hutId = 1,
+        arrivalDate = LocalDate(2026, 6, 1),
+        departureDate = LocalDate(2026, 6, 5),
+    )
+
+class BookingRoutesTest :
+    FunSpec({
+        test("GET /api/bookings/{id} returns 404 for a missing booking") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                coEvery { repository.findById(99) } returns null
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response = client.get("/api/bookings/99")
+
+                response.status shouldBe HttpStatusCode.NotFound
+            }
+        }
+
+        test("GET /api/bookings/{id} returns the booking when found") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                coEvery { repository.findById(1) } returns sampleBooking()
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response = client.get("/api/bookings/1")
+
+                response.status shouldBe HttpStatusCode.OK
+                response.body<Booking>().name shouldBe "Opphavet"
+            }
+        }
+
+        test("GET /api/bookings/{id} with a non-numeric id returns 404, not 500") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response = client.get("/api/bookings/not-a-number")
+
+                response.status shouldBe HttpStatusCode.NotFound
+            }
+        }
+
+        test("POST /api/bookings rejects invalid input before hitting the repository") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response =
+                    client.post("/api/bookings") {
+                        contentType(ContentType.Application.Json)
+                        setBody(sampleInput().copy(numberOfPeople = 0))
+                    }
+
+                response.status shouldBe HttpStatusCode.BadRequest
+            }
+        }
+
+        test("POST /api/bookings creates a booking and records the anonymous creator as null") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                coEvery { repository.insert(any(), null) } returns 7
+                coEvery { repository.findById(7) } returns sampleBooking(id = 7, createdBy = null)
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response =
+                    client.post("/api/bookings") {
+                        contentType(ContentType.Application.Json)
+                        setBody(sampleInput())
+                    }
+
+                response.status shouldBe HttpStatusCode.Created
+            }
+        }
+
+        test("POST /api/bookings created by a logged-in user records their name as creator") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                coEvery { repository.insert(any(), "Some User") } returns 7
+                coEvery { repository.findById(7) } returns sampleBooking(id = 7)
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response =
+                    client.post("/api/bookings") {
+                        header(TEST_PRINCIPAL_HEADER, "user")
+                        contentType(ContentType.Application.Json)
+                        setBody(sampleInput())
+                    }
+
+                response.status shouldBe HttpStatusCode.Created
+            }
+        }
+
+        test("PUT /api/bookings/{id} without a principal is rejected") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response =
+                    client.put("/api/bookings/1") {
+                        contentType(ContentType.Application.Json)
+                        setBody(sampleInput())
+                    }
+
+                response.status shouldBe HttpStatusCode.Unauthorized
+            }
+        }
+
+        test("PUT /api/bookings/{id} by a non-owning, non-admin user is forbidden") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                coEvery { repository.findById(1) } returns sampleBooking(createdBy = "Someone Else")
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response =
+                    client.put("/api/bookings/1") {
+                        header(TEST_PRINCIPAL_HEADER, "user")
+                        contentType(ContentType.Application.Json)
+                        setBody(sampleInput())
+                    }
+
+                response.status shouldBe HttpStatusCode.Forbidden
+            }
+        }
+
+        test("PUT /api/bookings/{id} by the owning user succeeds") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                coEvery { repository.findById(1) } returns sampleBooking(createdBy = "Some User")
+                coEvery { repository.update(1, any()) } returns 1
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response =
+                    client.put("/api/bookings/1") {
+                        header(TEST_PRINCIPAL_HEADER, "user")
+                        contentType(ContentType.Application.Json)
+                        setBody(sampleInput())
+                    }
+
+                response.status shouldBe HttpStatusCode.OK
+            }
+        }
+
+        test("PUT /api/bookings/{id} by an admin on someone else's booking succeeds") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                coEvery { repository.findById(1) } returns sampleBooking(createdBy = "Someone Else")
+                coEvery { repository.update(1, any()) } returns 1
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response =
+                    client.put("/api/bookings/1") {
+                        header(TEST_PRINCIPAL_HEADER, "admin")
+                        contentType(ContentType.Application.Json)
+                        setBody(sampleInput())
+                    }
+
+                response.status shouldBe HttpStatusCode.OK
+            }
+        }
+
+        test("GET /api/bookings with 'to' before 'from' is a bad request") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response = client.get("/api/bookings?from=2026-06-10&to=2026-06-01")
+
+                response.status shouldBe HttpStatusCode.BadRequest
+            }
+        }
+
+        test("GET /api/bookings defaults to the current year's June-August season") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                coEvery { repository.findInRange(any(), any()) } returns emptyList()
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                client.get("/api/bookings").status shouldBe HttpStatusCode.OK
+            }
+        }
+    })

@@ -1,11 +1,7 @@
 <script setup lang="ts">
 const huts = useHuts()
 
-const now = new Date()
-const cutoverYear = now.getFullYear()
-const seasonYear = now >= new Date(cutoverYear, 8, 1) ? cutoverYear + 1 : cutoverYear
-const seasonStart = `${seasonYear}-06-01`
-const seasonEnd = `${seasonYear}-08-31`
+const { seasonYear, seasonStart, seasonEnd } = seasonRangeFor(new Date())
 
 const { data: bookings, status, error } = useBookings(seasonStart, seasonEnd)
 
@@ -19,7 +15,7 @@ useSeoMeta({
   <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6">
     <header class="mb-6">
       <p class="font-display text-sm uppercase tracking-[0.2em] text-ember-600 dark:text-ember-400">
-        Sesong {{ year }}
+        Sesong {{ seasonYear }}
       </p>
       <h1 class="mt-1 font-display text-3xl text-forest-900 dark:text-birch-50">
         Booking-kalender

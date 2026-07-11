@@ -9,34 +9,12 @@ const props = defineProps<{
   monthEnd: number
 }>()
 
-const DAY_MS = 24 * 60 * 60 * 1000
+const days = computed(() => daysInRange(props.monthStart, props.monthEnd))
 
-const days = computed(() => {
-  const count = Math.round((props.monthEnd - props.monthStart) / DAY_MS) + 1
-  return Array.from({ length: count }, (_, i) => new Date(props.monthStart + i * DAY_MS))
-})
+const todayIndex = computed(() => todayIndexInRange(props.monthStart, days.value.length, new Date()))
 
-const todayIndex = computed(() => {
-  const now = new Date()
-  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
-  const index = Math.round((today - props.monthStart) / DAY_MS)
-  return index >= 0 && index < days.value.length ? index : -1
-})
-
-function blocksForHut(hutId: number) {
-  return props.bookings
-    .filter((b) => b.hutId === hutId)
-    .map((booking) => {
-      const [ay, am, ad] = booking.arrivalDate.split('-').map(Number)
-      const [dy, dm, dd] = booking.departureDate.split('-').map(Number)
-      const arrival = Math.max(Date.UTC(ay ?? 0, (am ?? 1) - 1, ad ?? 1), props.monthStart)
-      const departure = Math.min(Date.UTC(dy ?? 0, (dm ?? 1) - 1, dd ?? 1), props.monthEnd)
-      if (departure < arrival) return null
-      const startIndex = Math.round((arrival - props.monthStart) / DAY_MS)
-      const nights = Math.max(Math.round((departure - arrival) / DAY_MS), 0)
-      return { booking, startIndex, span: nights + 1 }
-    })
-    .filter((block): block is NonNullable<typeof block> => block !== null)
+function hutBlocks(hutId: number) {
+  return blocksForHut(props.bookings, hutId, props.monthStart, props.monthEnd)
 }
 
 const dayWidthRem = 1.7
@@ -106,7 +84,7 @@ const dayWidthRem = 1.7
           />
 
           <NuxtLink
-            v-for="{ booking, startIndex, span } in blocksForHut(hut.id)"
+            v-for="{ booking, startIndex, span } in hutBlocks(hut.id)"
             :key="booking.id"
             :to="`/bookings/${booking.id}`"
             class="absolute top-1 flex h-8 items-center truncate rounded-md px-2 text-xs font-medium shadow-sm transition hover:brightness-95"

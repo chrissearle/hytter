@@ -14,17 +14,9 @@ const emit = defineEmits<{
 const huts = useHuts()
 const { data: session } = useSession()
 
-const NAME_MAX_LENGTH = 100
-const namePresets = ['Opphavet', 'Sørkisrampen', 'HA12', 'Personlig', 'Annet'] as const
+const namePresets = NAME_PRESETS
 
-function presetForName(name: string | undefined): (typeof namePresets)[number] {
-  if (!name) return 'Opphavet'
-  return (namePresets as readonly string[]).includes(name)
-    ? (name as (typeof namePresets)[number])
-    : 'Annet'
-}
-
-const namePreset = ref<(typeof namePresets)[number]>(presetForName(props.booking?.name))
+const namePreset = ref<NamePreset>(presetForName(props.booking?.name))
 const freeText = ref(namePreset.value === 'Annet' ? (props.booking?.name ?? '') : '')
 const personligText = ref(
   namePreset.value === 'Personlig' && !session.value?.authenticated
@@ -54,24 +46,7 @@ const state = reactive({
 })
 
 function validate(): FormError[] {
-  const errors: FormError[] = []
-  if (!effectiveName.value.trim()) {
-    errors.push({ name: 'name', message: 'Navn er påkrevd' })
-  } else if (effectiveName.value.length > NAME_MAX_LENGTH) {
-    errors.push({ name: 'name', message: `Navn kan være maks ${NAME_MAX_LENGTH} tegn` })
-  }
-  if (!state.numberOfPeople || state.numberOfPeople < 1) {
-    errors.push({ name: 'numberOfPeople', message: 'Antall personer må være minst 1' })
-  }
-  if (!state.arrivalDate) {
-    errors.push({ name: 'arrivalDate', message: 'Ankomstdato er påkrevd' })
-  }
-  if (!state.departureDate) {
-    errors.push({ name: 'departureDate', message: 'Avreisedato er påkrevd' })
-  } else if (state.arrivalDate && state.departureDate < state.arrivalDate) {
-    errors.push({ name: 'departureDate', message: 'Avreise kan ikke være før ankomst' })
-  }
-  return errors
+  return validateBookingForm({ name: effectiveName.value, ...state })
 }
 
 function onSubmit(event: FormSubmitEvent<typeof state>) {
