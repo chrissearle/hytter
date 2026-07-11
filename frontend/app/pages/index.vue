@@ -1,9 +1,11 @@
 <script setup lang="ts">
 const huts = useHuts()
 
-const year = new Date().getFullYear()
-const seasonStart = `${year}-06-01`
-const seasonEnd = `${year}-08-31`
+const now = new Date()
+const cutoverYear = now.getFullYear()
+const seasonYear = now >= new Date(cutoverYear, 8, 1) ? cutoverYear + 1 : cutoverYear
+const seasonStart = `${seasonYear}-06-01`
+const seasonEnd = `${seasonYear}-08-31`
 
 const { data: bookings, status, error } = useBookings(seasonStart, seasonEnd)
 
