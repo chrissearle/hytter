@@ -15,22 +15,22 @@
   },
   "dependencies": {
     "@iconify-json/lucide": "1.2.116",
-    "@iconify-json/simple-icons": "1.2.87",
+    "@iconify-json/simple-icons": "1.2.89",
     "@nuxt/ui": "4.9.0",
     "nuxt": "4.4.8",
-    "tailwindcss": "4.3.1"
+    "tailwindcss": "4.3.2"
   },
   "devDependencies": {
     "@nuxt/eslint": "1.16.0",
-    "@types/node": "25.9.5",
+    "@types/node": "26.1.1",
     "@vue/test-utils": "2.4.11",
-    "eslint": "10.6.0",
+    "eslint": "10.7.0",
     "husky": "9.1.7",
     "lint-staged": "17.0.8",
-    "prettier": "3.9.4",
+    "prettier": "3.9.5",
     "typescript": "6.0.3",
     "vitest": "4.1.10",
-    "vue-tsc": "3.3.5"
+    "vue-tsc": "3.3.7"
   },
   "packageManager": "pnpm@11.10.0",
   "lint-staged": {
