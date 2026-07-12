@@ -52,7 +52,7 @@ application {
 }
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(22)
     compilerOptions {
         freeCompilerArgs.add("-Xcontext-parameters")
     }

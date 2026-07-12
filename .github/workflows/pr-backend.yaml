@@ -1,0 +1,42 @@
+name: PR Check Backend
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - backend/**
+      - .github/workflows/pr-backend.yaml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: "22"
+          distribution: "temurin"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Check
+        working-directory: backend
+        run: ./gradlew check
+
+      - name: Upload reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-reports
+          path: |
+            backend/**/build/reports/
+            backend/**/build/test-results/
