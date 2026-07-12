@@ -13,6 +13,15 @@
       "matchPackageNames": ["eclipse-temurin"],
       "matchUpdateTypes": ["minor", "patch"],
       "enabled": false
+    },
+    {
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7.0.0"
+    },
+    {
+      "matchDatasources": ["java-version"],
+      "matchPackageNames": ["java"],
+      "allowedVersions": "<=22"
     }
   ]
 }
