@@ -21,6 +21,8 @@ jobs:
 
       - name: Setup mise
         uses: jdx/mise-action@v4
+        with:
+          working_directory: frontend
 
       - name: Setup Node
         uses: actions/setup-node@v6
