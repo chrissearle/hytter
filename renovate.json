@@ -1,5 +1,18 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "ignorePaths": ["public/**"],
-  "extends": ["config:recommended"]
+  "extends": ["config:recommended"],
+  "packageRules": [
+    {
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["eclipse-temurin"],
+      "allowedVersions": "<=22"
+    },
+    {
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["eclipse-temurin"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "enabled": false
+    }
+  ]
 }
