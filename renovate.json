@@ -20,7 +20,7 @@
     },
     {
       "matchDatasources": ["java-version"],
-      "matchPackageNames": ["java"],
+      "matchDepNames": ["java"],
       "allowedVersions": "<=22"
     }
   ]
