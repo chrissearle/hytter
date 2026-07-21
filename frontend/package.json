@@ -14,7 +14,7 @@
     "prepare": "husky ../.husky"
   },
   "dependencies": {
-    "@iconify-json/lucide": "1.2.117",
+    "@iconify-json/lucide": "1.2.118",
     "@iconify-json/simple-icons": "1.2.90",
     "@nuxt/ui": "4.10.0",
     "nuxt": "4.4.8",
