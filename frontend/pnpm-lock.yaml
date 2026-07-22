@@ -12,8 +12,8 @@ importers:
         specifier: 1.2.118
         version: 1.2.118
       '@iconify-json/simple-icons':
-        specifier: 1.2.90
-        version: 1.2.90
+        specifier: 1.2.91
+        version: 1.2.91
       '@nuxt/ui':
         specifier: 4.10.0
         version: 4.10.0(083e2ab740cf6b599f10a33343559ce1)
@@ -736,8 +736,8 @@ packages:
   '@iconify-json/lucide@1.2.118':
     resolution: {integrity: sha512-JBnK4YOq6K/lA0JP//27QxFxJ4120TjvfXAzGZZIGjCcXcRRRFxl1rcV7+IWdcVCe90KXdqVaAwLaLf6G3HELw==}
 
-  '@iconify-json/simple-icons@1.2.90':
-    resolution: {integrity: sha512-zt2o2ZvQpHVvZJARIkZ51RnaHY2oqcPJMvHE+mVnxkSr+c33fnX4gciiXu+wyX5ei+s0qbVX1wD0DWBbaGBYMA==}
+  '@iconify-json/simple-icons@1.2.91':
+    resolution: {integrity: sha512-plQJHZxzpkIXaeYjJF0Sc9nkzYF32EDX9olx7j1hcKYFaiTrQXbcngZmvzuV0pG6uZPU3ZuA/GIsgxSHOm6jrQ==}
 
   '@iconify/collections@1.0.711':
     resolution: {integrity: sha512-atGUurchVFc/O3fHhpDCrPAe30TLEbWBDkuM5ZXjr0720rLpVNTqydyvMxQS3lt5kvIwrYgHqLInZ1F26y9n5A==}
@@ -5934,7 +5934,7 @@ snapshots:
   '@babel/plugin-syntax-jsx@7.28.6(@babel/core@7.29.0(supports-color@10.2.2))':
     dependencies:
       '@babel/core': 7.29.0(supports-color@10.2.2)
-      '@babel/helper-plugin-utils': 7.28.6
+      '@babel/helper-plugin-utils': 7.29.7
 
   '@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.0(supports-color@10.2.2))':
     dependencies:
@@ -6408,7 +6408,7 @@ snapshots:
     dependencies:
       '@iconify/types': 2.0.0
 
-  '@iconify-json/simple-icons@1.2.90':
+  '@iconify-json/simple-icons@1.2.91':
     dependencies:
       '@iconify/types': 2.0.0
 
@@ -8043,7 +8043,7 @@ snapshots:
       '@typescript-eslint/visitor-keys': 8.61.0
       debug: 4.4.3(supports-color@10.2.2)
       minimatch: 10.2.5
-      semver: 7.8.2
+      semver: 7.8.5
       tinyglobby: 0.2.17
       ts-api-utils: 2.5.0(typescript@6.0.3)
       typescript: 6.0.3
@@ -8315,11 +8315,11 @@ snapshots:
 
   '@vue-macros/common@3.1.4(vue@3.5.40(typescript@6.0.3))':
     dependencies:
-      '@vue/compiler-sfc': 3.5.35
+      '@vue/compiler-sfc': 3.5.40
       ast-kit: 2.2.0
       local-pkg: 1.2.1
       magic-string-ast: 1.0.3
-      unplugin-utils: 0.3.1
+      unplugin-utils: 0.3.2
     optionalDependencies:
       vue: 3.5.40(typescript@6.0.3)
 
