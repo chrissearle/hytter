@@ -8,6 +8,7 @@ import net.chrissearle.huts.domain.BookingInput
 import net.chrissearle.huts.domain.BookingStatus
 import org.flywaydb.core.Flyway
 import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.utility.DockerImageName
 import javax.sql.DataSource
 
 private fun bookingInput(
@@ -25,7 +26,7 @@ private fun bookingInput(
 
 class BookingRepositoryTest :
     FunSpec({
-        val container = PostgreSQLContainer<Nothing>("postgres:17-alpine")
+        val container = PostgreSQLContainer<Nothing>(DockerImageName.parse("postgres:18-alpine"))
 
         lateinit var dataSource: DataSource
         lateinit var repository: BookingRepository

@@ -3,6 +3,7 @@ package net.chrissearle.huts.repository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.number
 import net.chrissearle.huts.domain.Booking
 import net.chrissearle.huts.domain.BookingInput
 import net.chrissearle.huts.domain.BookingStatus
@@ -186,7 +187,7 @@ class BookingRepository(
         }
 }
 
-private fun LocalDate.toJavaLocalDate(): java.time.LocalDate = java.time.LocalDate.of(year, monthNumber, day)
+private fun LocalDate.toJavaLocalDate(): java.time.LocalDate = java.time.LocalDate.of(year, month.number, day)
 
 private fun LocalDate.Companion.fromJavaLocalDate(date: java.time.LocalDate): LocalDate =
     LocalDate(date.year, date.monthValue, date.dayOfMonth)

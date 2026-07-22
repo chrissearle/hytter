@@ -6,7 +6,6 @@ import io.ktor.server.sessions.SessionTransportTransformerEncrypt
 import io.ktor.server.sessions.Sessions
 import io.ktor.server.sessions.cookie
 import io.ktor.server.sessions.serialization.KotlinxSessionSerializer
-import io.ktor.util.hex
 import kotlinx.serialization.json.Json
 import java.security.SecureRandom
 
@@ -18,7 +17,7 @@ private fun envKeyOrRandom(
     length: Int,
 ): ByteArray {
     val fromEnv = System.getenv(name)?.takeIf { it.isNotBlank() }
-    if (fromEnv != null) return hex(fromEnv)
+    if (fromEnv != null) return fromEnv.hexToByteArray()
     return ByteArray(length).also { SecureRandom().nextBytes(it) }
 }
 

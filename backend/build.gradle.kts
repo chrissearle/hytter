@@ -53,9 +53,6 @@ application {
 
 kotlin {
     jvmToolchain(22)
-    compilerOptions {
-        freeCompilerArgs.add("-Xcontext-parameters")
-    }
 }
 
 detekt {
