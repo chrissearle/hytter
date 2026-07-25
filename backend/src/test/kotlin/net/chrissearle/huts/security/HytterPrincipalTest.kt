@@ -6,14 +6,14 @@ import io.kotest.matchers.shouldBe
 class HytterPrincipalTest :
     FunSpec({
         test("isAdmin is true when admin role present") {
-            HytterPrincipal(name = "Chris", roles = setOf("admin", "user")).isAdmin shouldBe true
+            HytterPrincipal(subject = "sub-1", name = "Chris", roles = setOf("admin", "user")).isAdmin shouldBe true
         }
 
         test("isAdmin is false when only user role present") {
-            HytterPrincipal(name = "Chris", roles = setOf("user")).isAdmin shouldBe false
+            HytterPrincipal(subject = "sub-1", name = "Chris", roles = setOf("user")).isAdmin shouldBe false
         }
 
         test("isAdmin is false with no roles") {
-            HytterPrincipal(name = "Chris", roles = emptySet()).isAdmin shouldBe false
+            HytterPrincipal(subject = "sub-1", name = "Chris", roles = emptySet()).isAdmin shouldBe false
         }
     })

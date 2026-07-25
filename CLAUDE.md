@@ -182,6 +182,22 @@ In the Keycloak admin console, for the realm this app uses:
 | `KEYCLOAK_CLIENT_SECRET` | From the client's *Credentials* tab. |
 | `PUBLIC_URL` | The frontend's externally reachable origin, e.g. `https://hytter.example.com` — used to build the `/callback` redirect URI and the post-logout redirect. Must exactly match what's registered in Keycloak. |
 | `SESSION_ENCRYPT_KEY` / `SESSION_SIGN_KEY` | Hex-encoded 16-byte keys for the session cookie. Without these, a random key is generated at startup (fine for a single dev instance, but breaks sessions on every restart and won't work across multiple replicas). |
+| `SESSION_MAX_AGE_SECONDS` | Optional. Browser-side cookie lifetime, default 36000 (10h). A backstop only — the authoritative limit is Keycloak's refresh token expiry, enforced server-side. Keep at or above Keycloak's SSO Session Max. |
+
+### Session lifetime
+
+The session cookie holds the user's `sub`, name, roles, the **refresh token**,
+and both expiry timestamps — never the access token, which is decoded and
+discarded at login. On every authenticated request `TokenRefresher.ensureFresh`
+either passes the session through, renews it against Keycloak (re-reading name
+and roles from the fresh access token, so **role changes propagate within one
+access-token lifetime**), or ends it.
+
+A login can never outlive Keycloak's grant: `refreshExpiresAt` always comes from
+`refresh_expires_in` and is never extended locally. Keycloak caps each new value
+by the remaining SSO Session Max, so it walks down and the session terminates on
+schedule. For the same reason the OAuth scopes must stay `openid profile` —
+adding `offline_access` would issue a token that effectively never expires.
 
 ### Environment variables the frontend needs (non-dev)
 

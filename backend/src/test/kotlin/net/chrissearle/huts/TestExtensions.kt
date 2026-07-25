@@ -14,8 +14,10 @@ import net.chrissearle.huts.security.HytterPrincipal
 /** Header used only by [testAuthentication] to pick a fixed principal for a request. */
 const val TEST_PRINCIPAL_HEADER = "X-Test-Principal"
 
-val adminPrincipal = HytterPrincipal(name = "Admin", roles = setOf("admin", "user"))
-val userPrincipal = HytterPrincipal(name = "Some User", roles = setOf("user"))
+val adminPrincipal =
+    HytterPrincipal(subject = "admin-subject", name = "Admin", roles = setOf("admin", "user"))
+val userPrincipal =
+    HytterPrincipal(subject = "user-subject", name = "Some User", roles = setOf("user"))
 
 private val testPrincipals = mapOf("admin" to adminPrincipal, "user" to userPrincipal)
 

@@ -10,9 +10,15 @@ import java.util.Base64
 private const val BASE64_BLOCK_SIZE = 4
 
 /**
- * Keycloak access tokens are JWTs. We only ever see this token immediately after
- * exchanging it directly with Keycloak over TLS, so the claims are decoded without
- * re-verifying the signature.
+ * Keycloak access tokens are JWTs. The signature is deliberately not verified:
+ * a token only ever reaches this function straight out of a TLS call the backend
+ * made to Keycloak itself - the authorization-code exchange, or a refresh - so
+ * its provenance is already established by the transport.
+ *
+ * This holds only as long as the backend stays a confidential client doing the
+ * code exchange server-side (the BFF pattern). If tokens ever start arriving
+ * from the browser as bearer credentials, this becomes a critical hole and full
+ * JWKS signature, issuer and audience validation is required first.
  */
 fun decodeAccessTokenClaims(accessToken: String): JsonObject {
     val payload = accessToken.split(".").getOrElse(1) { "" }
@@ -37,3 +43,6 @@ fun JsonObject.clientRoles(clientId: String): Set<String> =
         .orEmpty()
 
 fun JsonObject.displayName(): String? = this["name"]?.jsonPrimitive?.content
+
+/** The `sub` claim: stable for a user even if they change their display name. */
+fun JsonObject.subject(): String? = this["sub"]?.jsonPrimitive?.content

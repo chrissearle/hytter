@@ -23,6 +23,7 @@ dependencies {
     implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.server.call.id)
     implementation(libs.ktor.server.call.logging)
     implementation(libs.ktor.server.metrics.micrometer)
