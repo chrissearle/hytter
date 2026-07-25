@@ -1,4 +1,4 @@
-import type { BookingSummary } from '~/types/booking'
+import type { BookingSummary, Hut } from '~/types/booking'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -61,9 +61,14 @@ export interface TimelineBlock {
 }
 
 /** Lays out one hut's bookings within a month, clamping bookings that straddle the month boundary. */
-export function blocksForHut(bookings: BookingSummary[], hutId: number, monthStart: number, monthEnd: number): TimelineBlock[] {
+export function blocksForHut(
+  bookings: BookingSummary[],
+  hut: Hut,
+  monthStart: number,
+  monthEnd: number
+): TimelineBlock[] {
   return bookings
-    .filter((b) => b.hutId === hutId)
+    .filter((b) => b.hut === hut)
     .map((booking) => {
       const arrival = Math.max(toUtcDate(booking.arrivalDate), monthStart)
       const departure = Math.min(toUtcDate(booking.departureDate), monthEnd)

@@ -16,7 +16,9 @@ import io.mockk.mockk
 import kotlinx.datetime.LocalDate
 import net.chrissearle.huts.TEST_PRINCIPAL_HEADER
 import net.chrissearle.huts.domain.Booking
+import net.chrissearle.huts.domain.BookingNameType
 import net.chrissearle.huts.domain.BookingStatus
+import net.chrissearle.huts.domain.Hut
 import net.chrissearle.huts.repository.BookingRepository
 import net.chrissearle.huts.security.AUTH_PROVIDER_NAME
 import net.chrissearle.huts.testHytterApplication
@@ -24,10 +26,10 @@ import net.chrissearle.huts.testHytterApplication
 private fun sampleBooking() =
     Booking(
         id = 1,
+        nameType = BookingNameType.OPPHAVET,
         name = "Opphavet",
         numberOfPeople = 2,
-        hutId = 1,
-        hutName = "Huldrebakken",
+        hut = Hut.HULDREBAKKEN,
         arrivalDate = LocalDate(2026, 6, 1),
         departureDate = LocalDate(2026, 6, 5),
         adminNotes = null,

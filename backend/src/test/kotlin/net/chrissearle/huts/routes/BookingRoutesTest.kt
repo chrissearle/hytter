@@ -17,11 +17,15 @@ import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
 import io.mockk.coEvery
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.datetime.LocalDate
 import net.chrissearle.huts.TEST_PRINCIPAL_HEADER
 import net.chrissearle.huts.domain.Booking
+import net.chrissearle.huts.domain.BookingData
 import net.chrissearle.huts.domain.BookingInput
+import net.chrissearle.huts.domain.BookingNameType
 import net.chrissearle.huts.domain.BookingStatus
+import net.chrissearle.huts.domain.Hut
 import net.chrissearle.huts.repository.BookingRepository
 import net.chrissearle.huts.testHytterApplication
 
@@ -31,10 +35,10 @@ private fun sampleBooking(
     status: BookingStatus = BookingStatus.OPEN,
 ) = Booking(
     id = id,
+    nameType = BookingNameType.OPPHAVET,
     name = "Opphavet",
     numberOfPeople = 2,
-    hutId = 1,
-    hutName = "Huldrebakken",
+    hut = Hut.HULDREBAKKEN,
     arrivalDate = LocalDate(2026, 6, 1),
     departureDate = LocalDate(2026, 6, 5),
     adminNotes = null,
@@ -44,9 +48,10 @@ private fun sampleBooking(
 
 private fun sampleInput() =
     BookingInput(
-        name = "Opphavet",
+        nameType = BookingNameType.OPPHAVET,
+        name = null,
         numberOfPeople = 2,
-        hutId = 1,
+        hut = Hut.HULDREBAKKEN,
         arrivalDate = LocalDate(2026, 6, 1),
         departureDate = LocalDate(2026, 6, 5),
     )
@@ -148,6 +153,67 @@ class BookingRoutesTest :
                     }
 
                 response.status shouldBe HttpStatusCode.Created
+            }
+        }
+
+        test("POST /api/bookings resolves a personal booking to the logged-in user's name") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                val stored = slot<BookingData>()
+                coEvery { repository.insert(capture(stored), any()) } returns 7
+                coEvery { repository.findById(7) } returns sampleBooking(id = 7)
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                client.post("/api/bookings") {
+                    header(TEST_PRINCIPAL_HEADER, "user")
+                    contentType(ContentType.Application.Json)
+                    setBody(sampleInput().copy(nameType = BookingNameType.PERSONAL, name = "Ignored"))
+                }
+
+                stored.captured.name shouldBe "Some User"
+            }
+        }
+
+        test("POST /api/bookings ignores a client-supplied name for a fixed group") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                val stored = slot<BookingData>()
+                coEvery { repository.insert(capture(stored), any()) } returns 7
+                coEvery { repository.findById(7) } returns sampleBooking(id = 7)
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                client.post("/api/bookings") {
+                    contentType(ContentType.Application.Json)
+                    setBody(sampleInput().copy(nameType = BookingNameType.HA12, name = "Not HA12"))
+                }
+
+                stored.captured.name shouldBe "HA12"
+            }
+        }
+
+        test("POST /api/bookings with an unknown hut is a bad request") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response =
+                    client.post("/api/bookings") {
+                        contentType(ContentType.Application.Json)
+                        setBody(
+                            """
+                            {"nameType":"OPPHAVET","numberOfPeople":2,"hut":"CASTLE",
+                             "arrivalDate":"2026-06-01","departureDate":"2026-06-05"}
+                            """.trimIndent(),
+                        )
+                    }
+
+                response.status shouldBe HttpStatusCode.BadRequest
             }
         }
 

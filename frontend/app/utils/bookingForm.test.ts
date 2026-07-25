@@ -1,23 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { NAME_MAX_LENGTH, presetForName, validateBookingForm } from './bookingForm'
-
-describe('presetForName', () => {
-  it('defaults to Opphavet when no name is given', () => {
-    expect(presetForName(undefined)).toBe('Opphavet')
-  })
-
-  it('recognizes a known preset name', () => {
-    expect(presetForName('HA12')).toBe('HA12')
-  })
-
-  it('falls back to Annet for an unrecognized name', () => {
-    expect(presetForName('Some Custom Family')).toBe('Annet')
-  })
-})
+import { NAME_MAX_LENGTH, validateBookingForm } from './bookingForm'
 
 function validState(overrides: Partial<Parameters<typeof validateBookingForm>[0]> = {}) {
   return {
-    name: 'Opphavet',
+    name: 'Naboene',
+    requiresName: true,
     numberOfPeople: 2,
     arrivalDate: '2026-06-01',
     departureDate: '2026-06-05',
@@ -30,15 +17,21 @@ describe('validateBookingForm', () => {
     expect(validateBookingForm(validState())).toEqual([])
   })
 
-  it('requires a non-blank name', () => {
+  it('requires a non-blank name when the free-text field is shown', () => {
     expect(validateBookingForm(validState({ name: '   ' }))).toContainEqual({
       name: 'name',
       message: 'Navn er påkrevd'
     })
   })
 
+  it('ignores a blank name when the name comes from the backend', () => {
+    expect(validateBookingForm(validState({ name: '', requiresName: false }))).toEqual([])
+  })
+
   it('rejects a name over the max length', () => {
-    expect(validateBookingForm(validState({ name: 'a'.repeat(NAME_MAX_LENGTH + 1) }))).toContainEqual({
+    expect(
+      validateBookingForm(validState({ name: 'a'.repeat(NAME_MAX_LENGTH + 1) }))
+    ).toContainEqual({
       name: 'name',
       message: `Navn kan være maks ${NAME_MAX_LENGTH} tegn`
     })
@@ -94,11 +87,17 @@ describe('validateBookingForm', () => {
   it('reports every violated field at once', () => {
     const errors = validateBookingForm({
       name: '',
+      requiresName: true,
       numberOfPeople: 0,
       arrivalDate: '',
       departureDate: ''
     })
 
-    expect(errors.map((e) => e.name)).toEqual(['name', 'numberOfPeople', 'arrivalDate', 'departureDate'])
+    expect(errors.map((e) => e.name)).toEqual([
+      'name',
+      'numberOfPeople',
+      'arrivalDate',
+      'departureDate'
+    ])
   })
 })

@@ -5,6 +5,7 @@ const id = route.params.id as string
 
 const { data: booking, status, error } = useBooking(id)
 const { data: session } = useSession()
+const { data: reference } = useReference()
 
 const canEdit = computed(
   () =>
@@ -94,7 +95,7 @@ function statusBadge(bookingStatus: string): { label: string; color: 'success' |
 
       <div class="mb-4 flex items-center justify-between">
         <h1 class="font-display text-2xl text-forest-900 dark:text-birch-50">
-          {{ booking.hutName }}
+          {{ hutDisplayName(reference, booking.hut) }}
         </h1>
         <div class="flex items-center gap-3">
           <UBadge :color="statusBadge(booking.status).color" variant="subtle">

@@ -13,6 +13,11 @@ booking; admins approve or reject requests.
 
 ## Domain Rules
 
+Huts and booking name types are **backend enums** (`domain/Hut.kt`,
+`domain/BookingNameType.kt`), not database lookup tables. The enum name is the
+stored/wire value; the Bokmål label is the enum's `displayName`. The frontend
+gets both from `GET /api/reference` and hard-codes neither.
+
 A booking (reservation wish) includes:
 
 - **Name** — dropdown: Opphavet, Sørkisrampen, HA12, Personlig, Other (free text,

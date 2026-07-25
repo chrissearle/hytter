@@ -5,32 +5,72 @@ import arrow.core.raise.context.raise
 import io.ktor.http.HttpStatusCode
 import net.chrissearle.huts.api.ApiError
 import net.chrissearle.huts.api.ErrorResponse
-import net.chrissearle.huts.api.HutRequired
 import net.chrissearle.huts.api.InvalidDateRange
 import net.chrissearle.huts.api.InvalidNumberOfPeople
 import net.chrissearle.huts.api.NameRequired
+import net.chrissearle.huts.domain.BookingData
 import net.chrissearle.huts.domain.BookingInput
+import net.chrissearle.huts.domain.BookingNameType
 import java.sql.SQLException
 
-private const val NAME_MAX_LENGTH = 100
+const val NAME_MAX_LENGTH = 100
 
 fun SQLException.asErrorResponse(): ErrorResponse {
     val databaseErrorMessage = "database error"
     return ErrorResponse(status = HttpStatusCode.InternalServerError, message = message ?: databaseErrorMessage)
 }
 
+/**
+ * Validates the input and works out the name the booking is stored under.
+ * The hut and the name type are enums, so an unknown value fails during
+ * deserialization and never reaches this point.
+ */
 context(_: Raise<ApiError>)
-fun validateBookingInput(input: BookingInput) {
-    if (input.name.isBlank() || input.name.length > NAME_MAX_LENGTH) {
-        raise(NameRequired)
-    }
-    if (input.numberOfPeople <= 0) {
+fun BookingInput.resolve(principalName: String?): BookingData {
+    if (numberOfPeople <= 0) {
         raise(InvalidNumberOfPeople)
     }
-    if (input.hutId <= 0) {
-        raise(HutRequired)
-    }
-    if (input.departureDate < input.arrivalDate) {
+    if (departureDate < arrivalDate) {
         raise(InvalidDateRange("'departureDate' must not be before 'arrivalDate'"))
+    }
+
+    return BookingData(
+        nameType = nameType,
+        name = resolveName(principalName),
+        numberOfPeople = numberOfPeople,
+        hut = hut,
+        arrivalDate = arrivalDate,
+        departureDate = departureDate,
+    )
+}
+
+/**
+ * A fixed group always stores its own label - a client cannot claim to be one.
+ * "Personlig" uses the logged-in user's `name` claim; an anonymous visitor has
+ * no claim to draw on, so they type it in, as they do for "Annet".
+ */
+context(_: Raise<ApiError>)
+private fun BookingInput.resolveName(principalName: String?): String {
+    val fromPrincipal =
+        principalName
+            ?.trim()
+            ?.takeIf { nameType == BookingNameType.PERSONAL && it.isNotEmpty() }
+
+    return when {
+        !nameType.isFreeText -> {
+            nameType.displayName
+        }
+
+        fromPrincipal != null -> {
+            fromPrincipal
+        }
+
+        else -> {
+            val supplied = name?.trim().orEmpty()
+            if (supplied.isEmpty() || supplied.length > NAME_MAX_LENGTH) {
+                raise(NameRequired)
+            }
+            supplied
+        }
     }
 }

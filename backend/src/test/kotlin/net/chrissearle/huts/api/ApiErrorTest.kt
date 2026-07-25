@@ -27,6 +27,5 @@ class ApiErrorTest :
 
         test("RequiredField subtypes report their field name in the message") {
             NameRequired.response.message shouldBe "name required"
-            HutRequired.response.message shouldBe "hutId required"
         }
     })

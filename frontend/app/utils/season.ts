@@ -11,7 +11,11 @@ export function seasonYearFor(now: Date): number {
   return now >= new Date(year, SEASON_CUTOVER_MONTH, 1) ? year + 1 : year
 }
 
-export function seasonRangeFor(now: Date): { seasonYear: number; seasonStart: string; seasonEnd: string } {
+export function seasonRangeFor(now: Date): {
+  seasonYear: number
+  seasonStart: string
+  seasonEnd: string
+} {
   const seasonYear = seasonYearFor(now)
   return {
     seasonYear,

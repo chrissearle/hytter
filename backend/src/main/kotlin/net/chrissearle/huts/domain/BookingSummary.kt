@@ -7,8 +7,7 @@ import kotlinx.serialization.Serializable
 data class BookingSummary(
     val id: Int,
     val name: String,
-    val hutId: Int,
-    val hutName: String,
+    val hut: Hut,
     val arrivalDate: LocalDate,
     val departureDate: LocalDate,
     val status: BookingStatus,

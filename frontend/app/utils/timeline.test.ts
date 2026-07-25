@@ -6,8 +6,7 @@ function booking(overrides: Partial<BookingSummary> = {}): BookingSummary {
   return {
     id: 1,
     name: 'Opphavet',
-    hutId: 1,
-    hutName: 'Huldrebakken',
+    hut: 'HULDREBAKKEN',
     arrivalDate: '2026-06-01',
     departureDate: '2026-06-05',
     status: 'OPEN',
@@ -75,15 +74,22 @@ describe('todayIndexInRange', () => {
 
 describe('blocksForHut', () => {
   it('ignores bookings for other huts', () => {
-    const bookings = [booking({ hutId: 2 })]
+    const bookings = [booking({ hut: 'TROLLHAUGEN' })]
 
-    expect(blocksForHut(bookings, 1, Date.UTC(2026, 5, 1), Date.UTC(2026, 5, 30))).toEqual([])
+    expect(
+      blocksForHut(bookings, 'HULDREBAKKEN', Date.UTC(2026, 5, 1), Date.UTC(2026, 5, 30))
+    ).toEqual([])
   })
 
   it('computes the start offset and inclusive night span for a booking fully within the month', () => {
     const bookings = [booking({ arrivalDate: '2026-06-10', departureDate: '2026-06-13' })]
 
-    const blocks = blocksForHut(bookings, 1, Date.UTC(2026, 5, 1), Date.UTC(2026, 5, 30))
+    const blocks = blocksForHut(
+      bookings,
+      'HULDREBAKKEN',
+      Date.UTC(2026, 5, 1),
+      Date.UTC(2026, 5, 30)
+    )
 
     expect(blocks).toHaveLength(1)
     expect(blocks[0]!.startIndex).toBe(9)
@@ -93,7 +99,12 @@ describe('blocksForHut', () => {
   it('clamps a booking that starts before the visible month to the month start', () => {
     const bookings = [booking({ arrivalDate: '2026-05-28', departureDate: '2026-06-03' })]
 
-    const blocks = blocksForHut(bookings, 1, Date.UTC(2026, 5, 1), Date.UTC(2026, 5, 30))
+    const blocks = blocksForHut(
+      bookings,
+      'HULDREBAKKEN',
+      Date.UTC(2026, 5, 1),
+      Date.UTC(2026, 5, 30)
+    )
 
     expect(blocks[0]!.startIndex).toBe(0)
     expect(blocks[0]!.span).toBe(3)
@@ -102,7 +113,12 @@ describe('blocksForHut', () => {
   it('clamps a booking that ends after the visible month to the month end', () => {
     const bookings = [booking({ arrivalDate: '2026-06-28', departureDate: '2026-07-03' })]
 
-    const blocks = blocksForHut(bookings, 1, Date.UTC(2026, 5, 1), Date.UTC(2026, 5, 30))
+    const blocks = blocksForHut(
+      bookings,
+      'HULDREBAKKEN',
+      Date.UTC(2026, 5, 1),
+      Date.UTC(2026, 5, 30)
+    )
 
     expect(blocks[0]!.startIndex).toBe(27)
     expect(blocks[0]!.span).toBe(3)
@@ -111,13 +127,20 @@ describe('blocksForHut', () => {
   it('drops a booking that does not overlap the visible month at all', () => {
     const bookings = [booking({ arrivalDate: '2026-01-01', departureDate: '2026-01-05' })]
 
-    expect(blocksForHut(bookings, 1, Date.UTC(2026, 5, 1), Date.UTC(2026, 5, 30))).toEqual([])
+    expect(
+      blocksForHut(bookings, 'HULDREBAKKEN', Date.UTC(2026, 5, 1), Date.UTC(2026, 5, 30))
+    ).toEqual([])
   })
 
   it('gives a same-day arrival/departure booking a span of one day', () => {
     const bookings = [booking({ arrivalDate: '2026-06-10', departureDate: '2026-06-10' })]
 
-    const blocks = blocksForHut(bookings, 1, Date.UTC(2026, 5, 1), Date.UTC(2026, 5, 30))
+    const blocks = blocksForHut(
+      bookings,
+      'HULDREBAKKEN',
+      Date.UTC(2026, 5, 1),
+      Date.UTC(2026, 5, 30)
+    )
 
     expect(blocks[0]!.span).toBe(1)
   })

@@ -4,22 +4,26 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.LocalDate
-import net.chrissearle.huts.domain.BookingInput
+import net.chrissearle.huts.domain.BookingData
+import net.chrissearle.huts.domain.BookingNameType
 import net.chrissearle.huts.domain.BookingStatus
+import net.chrissearle.huts.domain.Hut
 import org.flywaydb.core.Flyway
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 import javax.sql.DataSource
 
-private fun bookingInput(
+private fun bookingData(
+    nameType: BookingNameType = BookingNameType.OPPHAVET,
     name: String = "Opphavet",
-    hutId: Int = 1,
+    hut: Hut = Hut.HULDREBAKKEN,
     arrivalDate: LocalDate = LocalDate(2026, 6, 1),
     departureDate: LocalDate = LocalDate(2026, 6, 5),
-) = BookingInput(
+) = BookingData(
+    nameType = nameType,
     name = name,
     numberOfPeople = 2,
-    hutId = hutId,
+    hut = hut,
     arrivalDate = arrivalDate,
     departureDate = departureDate,
 )
@@ -56,21 +60,35 @@ class BookingRepositoryTest :
         }
 
         test("insert then findById round-trips the booking") {
-            val id = repository.insert(bookingInput(), createdBy = "Chris")
+            val id = repository.insert(bookingData(), createdBy = "Chris")
 
             val booking = repository.findById(id)
 
-            booking shouldBe
-                booking?.copy(
-                    id = id,
-                    name = "Opphavet",
-                    numberOfPeople = 2,
-                    hutId = 1,
-                    arrivalDate = LocalDate(2026, 6, 1),
-                    departureDate = LocalDate(2026, 6, 5),
-                    status = BookingStatus.OPEN,
-                    createdBy = "Chris",
-                )
+            booking?.id shouldBe id
+            booking?.nameType shouldBe BookingNameType.OPPHAVET
+            booking?.name shouldBe "Opphavet"
+            booking?.numberOfPeople shouldBe 2
+            booking?.hut shouldBe Hut.HULDREBAKKEN
+            booking?.arrivalDate shouldBe LocalDate(2026, 6, 1)
+            booking?.departureDate shouldBe LocalDate(2026, 6, 5)
+            booking?.status shouldBe BookingStatus.OPEN
+            booking?.createdBy shouldBe "Chris"
+        }
+
+        test("every hut value survives a round-trip through the check constraint") {
+            Hut.entries.forEach { hut ->
+                val id = repository.insert(bookingData(hut = hut), createdBy = null)
+
+                repository.findById(id)?.hut shouldBe hut
+            }
+        }
+
+        test("every name type survives a round-trip through the check constraint") {
+            BookingNameType.entries.forEach { nameType ->
+                val id = repository.insert(bookingData(nameType = nameType, name = "Someone"), createdBy = null)
+
+                repository.findById(id)?.nameType shouldBe nameType
+            }
         }
 
         test("findById returns null for an unknown id") {
@@ -78,14 +96,14 @@ class BookingRepositoryTest :
         }
 
         test("insert with no logged-in creator stores a null created_by") {
-            val id = repository.insert(bookingInput(), createdBy = null)
+            val id = repository.insert(bookingData(), createdBy = null)
 
             repository.findById(id)?.createdBy shouldBe null
         }
 
         test("findInRange only returns bookings overlapping the window") {
             repository.insert(
-                bookingInput(
+                bookingData(
                     name = "inside",
                     arrivalDate = LocalDate(2026, 6, 10),
                     departureDate = LocalDate(2026, 6, 15),
@@ -93,7 +111,7 @@ class BookingRepositoryTest :
                 createdBy = null,
             )
             repository.insert(
-                bookingInput(
+                bookingData(
                     name = "before",
                     arrivalDate = LocalDate(2026, 1, 1),
                     departureDate = LocalDate(2026, 1, 5),
@@ -101,7 +119,7 @@ class BookingRepositoryTest :
                 createdBy = null,
             )
             repository.insert(
-                bookingInput(
+                bookingData(
                     name = "overlaps-start",
                     arrivalDate = LocalDate(2026, 6, 5),
                     departureDate = LocalDate(2026, 6, 12),
@@ -114,12 +132,20 @@ class BookingRepositoryTest :
             results.map { it.name }.toSet() shouldBe setOf("inside", "overlaps-start")
         }
 
+        test("findInRange carries the hut through to the summary") {
+            repository.insert(bookingData(hut = Hut.TENT_HAMMOCK), createdBy = null)
+
+            val results = repository.findInRange(LocalDate(2026, 6, 1), LocalDate(2026, 6, 30))
+
+            results.map { it.hut } shouldBe listOf(Hut.TENT_HAMMOCK)
+        }
+
         test("update reverts an approved booking to OPEN") {
-            val id = repository.insert(bookingInput(), createdBy = null)
+            val id = repository.insert(bookingData(), createdBy = null)
             repository.approve(id)
             repository.findById(id)?.status shouldBe BookingStatus.APPROVED
 
-            repository.update(id, bookingInput(name = "Updated"))
+            repository.update(id, bookingData(name = "Updated"))
 
             val updated = repository.findById(id)
             updated?.name shouldBe "Updated"
@@ -127,7 +153,7 @@ class BookingRepositoryTest :
         }
 
         test("approve sets status to APPROVED") {
-            val id = repository.insert(bookingInput(), createdBy = null)
+            val id = repository.insert(bookingData(), createdBy = null)
 
             repository.approve(id)
 
@@ -135,7 +161,7 @@ class BookingRepositoryTest :
         }
 
         test("delete removes the booking") {
-            val id = repository.insert(bookingInput(), createdBy = null)
+            val id = repository.insert(bookingData(), createdBy = null)
 
             val deletedRows = repository.delete(id)
 

@@ -71,8 +71,6 @@ data object InvalidNumberOfPeople : ApiError {
         ErrorResponse(status = HttpStatusCode.BadRequest, message = "numberOfPeople must be greater than 0")
 }
 
-data object HutRequired : RequiredField(fieldName = "hutId")
-
 data object NotBookingOwner : ApiError {
     override val response =
         ErrorResponse(status = HttpStatusCode.Forbidden, message = "You may only edit your own bookings")

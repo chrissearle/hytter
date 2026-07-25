@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { BookingSummary } from '~/types/booking'
+import type { BookingSummary, HutItem } from '~/types/booking'
 
 const props = defineProps<{
-  huts: { id: number; name: string }[]
+  huts: HutItem[]
   bookings: BookingSummary[]
   seasonStart: string
   seasonEnd: string

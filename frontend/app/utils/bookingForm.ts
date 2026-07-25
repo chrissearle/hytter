@@ -1,11 +1,4 @@
 export const NAME_MAX_LENGTH = 100
-export const NAME_PRESETS = ['Opphavet', 'Sørkisrampen', 'HA12', 'Personlig', 'Annet'] as const
-export type NamePreset = (typeof NAME_PRESETS)[number]
-
-export function presetForName(name: string | undefined): NamePreset {
-  if (!name) return 'Opphavet'
-  return (NAME_PRESETS as readonly string[]).includes(name) ? (name as NamePreset) : 'Annet'
-}
 
 export interface BookingFormFieldError {
   name: string
@@ -13,7 +6,10 @@ export interface BookingFormFieldError {
 }
 
 export interface BookingFormState {
+  /** The free-text name. Only validated when [requiresName] is set. */
   name: string
+  /** True when the selected name type shows a free-text field - see needsNameInput. */
+  requiresName: boolean
   numberOfPeople: number | undefined
   arrivalDate: string
   departureDate: string
@@ -23,10 +19,12 @@ export function validateBookingForm(state: BookingFormState): BookingFormFieldEr
   const errors: BookingFormFieldError[] = []
   const trimmedName = state.name.trim()
 
-  if (!trimmedName) {
-    errors.push({ name: 'name', message: 'Navn er påkrevd' })
-  } else if (trimmedName.length > NAME_MAX_LENGTH) {
-    errors.push({ name: 'name', message: `Navn kan være maks ${NAME_MAX_LENGTH} tegn` })
+  if (state.requiresName) {
+    if (!trimmedName) {
+      errors.push({ name: 'name', message: 'Navn er påkrevd' })
+    } else if (trimmedName.length > NAME_MAX_LENGTH) {
+      errors.push({ name: 'name', message: `Navn kan være maks ${NAME_MAX_LENGTH} tegn` })
+    }
   }
 
   if (!state.numberOfPeople || state.numberOfPeople < 1) {

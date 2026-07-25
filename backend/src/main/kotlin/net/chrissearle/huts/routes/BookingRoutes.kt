@@ -33,6 +33,8 @@ private const val SEASON_END_MONTH = 8
 private const val SEASON_END_DAY = 31
 
 fun Route.bookingRoutes(repository: BookingRepository) {
+    referenceRoutes()
+
     authenticate(AUTH_PROVIDER_NAME, optional = true) {
         listBookingsRoute(repository)
         getBookingRoute(repository)
@@ -81,10 +83,9 @@ private fun Route.createBookingRoute(repository: BookingRepository) {
         val principal = call.principal<HytterPrincipal>()
 
         either {
-            val input = call.receive<BookingInput>()
-            validateBookingInput(input)
+            val data = call.receive<BookingInput>().resolve(principal?.name)
             val id =
-                catch({ repository.insert(input, createdBy = principal?.name) }) { e: SQLException ->
+                catch({ repository.insert(data, createdBy = principal?.name) }) { e: SQLException ->
                     raise(DatabaseCallFailed(e.asErrorResponse()))
                 }
             catch({ repository.findById(id) }) { e: SQLException ->
@@ -113,9 +114,8 @@ private fun Route.updateBookingRoute(repository: BookingRepository) {
             if (!principal.isAdmin && existing.createdBy != principal.name) {
                 raise(NotBookingOwner)
             }
-            val input = call.receive<BookingInput>()
-            validateBookingInput(input)
-            catch({ repository.update(id, input) }) { e: SQLException ->
+            val data = call.receive<BookingInput>().resolve(principal.name)
+            catch({ repository.update(id, data) }) { e: SQLException ->
                 raise(DatabaseCallFailed(e.asErrorResponse()))
             }
             catch({ repository.findById(id) }) { e: SQLException ->

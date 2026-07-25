@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const huts = useHuts()
+const { data: reference } = useReference()
 
 const { seasonYear, seasonStart, seasonEnd } = seasonRangeFor(new Date())
 
@@ -44,7 +44,7 @@ useSeoMeta({
 
     <HutTimeline
       v-else
-      :huts="huts"
+      :huts="reference?.huts ?? []"
       :bookings="bookings ?? []"
       :season-start="seasonStart"
       :season-end="seasonEnd"

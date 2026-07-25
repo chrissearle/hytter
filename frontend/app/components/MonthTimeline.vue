@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { BookingSummary } from '~/types/booking'
+import type { BookingSummary, Hut, HutItem } from '~/types/booking'
 
 const props = defineProps<{
-  huts: { id: number; name: string }[]
+  huts: HutItem[]
   bookings: BookingSummary[]
   label: string
   monthStart: number
@@ -11,10 +11,12 @@ const props = defineProps<{
 
 const days = computed(() => daysInRange(props.monthStart, props.monthEnd))
 
-const todayIndex = computed(() => todayIndexInRange(props.monthStart, days.value.length, new Date()))
+const todayIndex = computed(() =>
+  todayIndexInRange(props.monthStart, days.value.length, new Date())
+)
 
-function hutBlocks(hutId: number) {
-  return blocksForHut(props.bookings, hutId, props.monthStart, props.monthEnd)
+function hutBlocks(hut: Hut) {
+  return blocksForHut(props.bookings, hut, props.monthStart, props.monthEnd)
 }
 
 const dayWidthRem = 1.7
@@ -50,13 +52,13 @@ const dayWidthRem = 1.7
       <!-- Hut rows -->
       <div
         v-for="hut in huts"
-        :key="hut.id"
+        :key="hut.value"
         class="flex border-b border-forest-100 last:border-b-0 dark:border-forest-900"
       >
         <div
           class="flex w-32 shrink-0 items-center border-r border-forest-200 px-3 py-2.5 text-sm text-forest-700 dark:border-forest-800 dark:text-birch-200"
         >
-          {{ hut.name }}
+          {{ hut.displayName }}
         </div>
 
         <div
@@ -84,7 +86,7 @@ const dayWidthRem = 1.7
           />
 
           <NuxtLink
-            v-for="{ booking, startIndex, span } in hutBlocks(hut.id)"
+            v-for="{ booking, startIndex, span } in hutBlocks(hut.value)"
             :key="booking.id"
             :to="`/bookings/${booking.id}`"
             class="absolute top-1 flex h-8 items-center truncate rounded-md px-2 text-xs font-medium shadow-sm transition hover:brightness-95"

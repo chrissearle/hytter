@@ -1,10 +1,34 @@
 export type BookingStatus = 'OPEN' | 'APPROVED'
 
+export type Hut = 'HULDREBAKKEN' | 'TROLLHAUGEN' | 'TENT_HAMMOCK'
+
+export type BookingNameType = 'OPPHAVET' | 'SORKISRAMPEN' | 'HA12' | 'PERSONAL' | 'OTHER'
+
+/**
+ * Reference data served by GET /api/reference. Hut names and booking groups
+ * live in the backend enums, so the GUI never hard-codes either the values or
+ * their Bokmål labels.
+ */
+export interface HutItem {
+  value: Hut
+  displayName: string
+}
+
+export interface NameTypeItem {
+  value: BookingNameType
+  displayName: string
+  isFreeText: boolean
+}
+
+export interface Reference {
+  huts: HutItem[]
+  nameTypes: NameTypeItem[]
+}
+
 export interface BookingSummary {
   id: number
   name: string
-  hutId: number
-  hutName: string
+  hut: Hut
   arrivalDate: string
   departureDate: string
   status: BookingStatus
@@ -12,10 +36,10 @@ export interface BookingSummary {
 
 export interface Booking {
   id: number
+  nameType: BookingNameType
   name: string
   numberOfPeople: number
-  hutId: number
-  hutName: string
+  hut: Hut
   arrivalDate: string
   departureDate: string
   adminNotes: string | null
@@ -24,9 +48,10 @@ export interface Booking {
 }
 
 export interface BookingInput {
-  name: string
+  nameType: BookingNameType
+  name?: string
   numberOfPeople: number
-  hutId: number
+  hut: Hut
   arrivalDate: string
   departureDate: string
 }
