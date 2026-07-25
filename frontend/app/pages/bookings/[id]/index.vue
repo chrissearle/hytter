@@ -3,15 +3,11 @@ const route = useRoute()
 const router = useRouter()
 const id = route.params.id as string
 
+definePageMeta({ middleware: 'authenticated' })
+
 const { data: booking, status, error } = useBooking(id)
 const { data: session } = useSession()
 const { data: reference } = useReference()
-
-const canEdit = computed(
-  () =>
-    session.value?.isAdmin ||
-    (session.value?.authenticated && session.value.name === booking.value?.createdBy)
-)
 
 const actionError = ref<string | null>(null)
 const approving = ref(false)
@@ -101,7 +97,12 @@ function statusBadge(bookingStatus: string): { label: string; color: 'success' |
           <UBadge :color="statusBadge(booking.status).color" variant="subtle">
             {{ statusBadge(booking.status).label }}
           </UBadge>
-          <UButton v-if="canEdit" :to="`/bookings/${booking.id}/edit`" size="sm" variant="soft">
+          <UButton
+            v-if="booking.canEdit"
+            :to="`/bookings/${booking.id}/edit`"
+            size="sm"
+            variant="soft"
+          >
             Rediger
           </UButton>
           <UButton

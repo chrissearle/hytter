@@ -6,6 +6,7 @@ const props = defineProps<{
   bookings: BookingSummary[]
   seasonStart: string
   seasonEnd: string
+  linkable: boolean
 }>()
 
 const months = computed(() => buildMonths(props.seasonStart, props.seasonEnd))
@@ -21,6 +22,7 @@ const months = computed(() => buildMonths(props.seasonStart, props.seasonEnd))
       :month-end="month.monthEnd"
       :huts="huts"
       :bookings="bookings"
+      :linkable="linkable"
     />
   </div>
 </template>

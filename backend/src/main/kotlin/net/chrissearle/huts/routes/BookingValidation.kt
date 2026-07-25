@@ -2,6 +2,7 @@ package net.chrissearle.huts.routes
 
 import arrow.core.raise.Raise
 import arrow.core.raise.context.raise
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpStatusCode
 import net.chrissearle.huts.api.ApiError
 import net.chrissearle.huts.api.ErrorResponse
@@ -15,9 +16,16 @@ import java.sql.SQLException
 
 const val NAME_MAX_LENGTH = 100
 
+private val logger = KotlinLogging.logger {}
+
+/**
+ * Logs the real failure and hands back a response the client never sees the
+ * detail of - see [net.chrissearle.huts.api.messageMap]. The call-id in the MDC
+ * ties the log line back to the request.
+ */
 fun SQLException.asErrorResponse(): ErrorResponse {
-    val databaseErrorMessage = "database error"
-    return ErrorResponse(status = HttpStatusCode.InternalServerError, message = message ?: databaseErrorMessage)
+    logger.error(this) { "Database call failed" }
+    return ErrorResponse(status = HttpStatusCode.InternalServerError, message = message ?: "database error")
 }
 
 /**

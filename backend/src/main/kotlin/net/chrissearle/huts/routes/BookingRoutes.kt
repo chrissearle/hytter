@@ -1,5 +1,6 @@
 package net.chrissearle.huts.routes
 
+import arrow.core.raise.Raise
 import arrow.core.raise.catch
 import arrow.core.raise.context.raise
 import arrow.core.raise.either
@@ -14,13 +15,16 @@ import io.ktor.server.routing.put
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
+import net.chrissearle.huts.api.ApiError
 import net.chrissearle.huts.api.BookingNotFound
 import net.chrissearle.huts.api.DatabaseCallFailed
+import net.chrissearle.huts.api.InvalidBookingId
 import net.chrissearle.huts.api.InvalidDateRange
 import net.chrissearle.huts.api.NotBookingOwner
 import net.chrissearle.huts.api.PrincipalMissing
 import net.chrissearle.huts.api.respond
 import net.chrissearle.huts.domain.BookingInput
+import net.chrissearle.huts.domain.BookingRecord
 import net.chrissearle.huts.repository.BookingRepository
 import net.chrissearle.huts.security.AUTH_PROVIDER_NAME
 import net.chrissearle.huts.security.HytterPrincipal
@@ -45,6 +49,10 @@ fun Route.bookingRoutes(repository: BookingRepository) {
     }
 }
 
+/**
+ * Public: anonymous visitors see the calendar blocks - which hut, which group,
+ * which dates, approved or not. The detail behind a block is not public.
+ */
 private fun Route.listBookingsRoute(repository: BookingRepository) {
     get("/api/bookings") {
         val from = call.request.queryParameters["from"]
@@ -63,17 +71,18 @@ private fun Route.listBookingsRoute(repository: BookingRepository) {
     }
 }
 
+/** Requires a login: headcount, admin notes and the requester are not public. */
 private fun Route.getBookingRoute(repository: BookingRepository) {
     get("/api/bookings/{id}") {
-        val id = call.parameters["id"]?.toIntOrNull()
+        val rawId = call.parameters["id"]
+        val principal = call.principal<HytterPrincipal>()
 
         either {
-            if (id == null) {
-                raise(BookingNotFound(-1))
+            if (principal == null) {
+                raise(PrincipalMissing)
             }
-            catch({ repository.findById(id) }) { e: SQLException ->
-                raise(DatabaseCallFailed(e.asErrorResponse()))
-            } ?: raise(BookingNotFound(id))
+            val record = repository.findBooking(bookingId(rawId))
+            record.toBooking(canEdit = record.canBeEditedBy(principal))
         }.respond()
     }
 }
@@ -85,47 +94,48 @@ private fun Route.createBookingRoute(repository: BookingRepository) {
         either {
             val data = call.receive<BookingInput>().resolve(principal?.name)
             val id =
-                catch({ repository.insert(data, createdBy = principal?.name) }) { e: SQLException ->
+                catch({
+                    repository.insert(
+                        data = data,
+                        createdBy = principal?.name,
+                        createdBySubject = principal?.subject,
+                    )
+                }) { e: SQLException ->
                     raise(DatabaseCallFailed(e.asErrorResponse()))
                 }
-            catch({ repository.findById(id) }) { e: SQLException ->
-                raise(DatabaseCallFailed(e.asErrorResponse()))
-            } ?: raise(BookingNotFound(id))
+            repository.findBooking(id).toBooking(canEdit = principal != null)
         }.respond(HttpStatusCode.Created)
     }
 }
 
 private fun Route.updateBookingRoute(repository: BookingRepository) {
     put("/api/bookings/{id}") {
-        val id = call.parameters["id"]?.toIntOrNull()
+        val rawId = call.parameters["id"]
         val principal = call.principal<HytterPrincipal>()
 
         either {
-            if (id == null) {
-                raise(BookingNotFound(-1))
-            }
             if (principal == null) {
                 raise(PrincipalMissing)
             }
-            val existing =
-                catch({ repository.findById(id) }) { e: SQLException ->
-                    raise(DatabaseCallFailed(e.asErrorResponse()))
-                } ?: raise(BookingNotFound(id))
-            if (!principal.isAdmin && existing.createdBy != principal.name) {
+            val id = bookingId(rawId)
+            val existing = repository.findBooking(id)
+            if (!existing.canBeEditedBy(principal)) {
                 raise(NotBookingOwner)
             }
             val data = call.receive<BookingInput>().resolve(principal.name)
             catch({ repository.update(id, data) }) { e: SQLException ->
                 raise(DatabaseCallFailed(e.asErrorResponse()))
             }
-            catch({ repository.findById(id) }) { e: SQLException ->
-                raise(DatabaseCallFailed(e.asErrorResponse()))
-            } ?: raise(BookingNotFound(id))
+            repository.findBooking(id).toBooking(canEdit = true)
         }.respond()
     }
 }
 
-private fun parseDate(value: String): LocalDate = LocalDate.parse(value)
+context(_: Raise<ApiError>)
+private fun parseDate(value: String): LocalDate =
+    catch({ LocalDate.parse(value) }) { _: IllegalArgumentException ->
+        raise(InvalidDateRange("'$value' is not a valid date"))
+    }
 
 @OptIn(ExperimentalTime::class)
 private fun currentYear(): Int = Clock.System.todayIn(TimeZone.currentSystemDefault()).year

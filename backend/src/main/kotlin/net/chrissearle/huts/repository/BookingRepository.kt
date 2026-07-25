@@ -4,9 +4,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.number
-import net.chrissearle.huts.domain.Booking
 import net.chrissearle.huts.domain.BookingData
 import net.chrissearle.huts.domain.BookingNameType
+import net.chrissearle.huts.domain.BookingRecord
 import net.chrissearle.huts.domain.BookingStatus
 import net.chrissearle.huts.domain.BookingSummary
 import net.chrissearle.huts.domain.Hut
@@ -21,6 +21,7 @@ private const val PARAM_HUT = 4
 private const val PARAM_ARRIVAL_DATE = 5
 private const val PARAM_DEPARTURE_DATE = 6
 private const val PARAM_SEVENTH = 7
+private const val PARAM_EIGHTH = 8
 
 private fun PreparedStatement.bindData(data: BookingData) {
     setString(PARAM_NAME_TYPE, data.nameType.name)
@@ -42,15 +43,16 @@ private const val FIND_IN_RANGE_SQL =
 private const val FIND_BY_ID_SQL =
     """
     SELECT id, name_type, name, number_of_people, hut,
-           arrival_date, departure_date, admin_notes, status, created_by
+           arrival_date, departure_date, admin_notes, status, created_by, created_by_subject
     FROM bookings
     WHERE id = ?
     """
 
 private const val INSERT_SQL =
     """
-    INSERT INTO bookings (name_type, name, number_of_people, hut, arrival_date, departure_date, created_by)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO bookings
+        (name_type, name, number_of_people, hut, arrival_date, departure_date, created_by, created_by_subject)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     RETURNING id
     """
 
@@ -89,13 +91,13 @@ class BookingRepository(
             }
         }
 
-    suspend fun findById(id: Int): Booking? =
+    suspend fun findById(id: Int): BookingRecord? =
         withContext(Dispatchers.IO) {
             dataSource.connection.use { connection ->
                 connection.prepareStatement(FIND_BY_ID_SQL).use { statement ->
                     statement.setInt(1, id)
                     statement.executeQuery().use { rows ->
-                        if (rows.next()) rows.toBooking() else null
+                        if (rows.next()) rows.toBookingRecord() else null
                     }
                 }
             }
@@ -104,12 +106,14 @@ class BookingRepository(
     suspend fun insert(
         data: BookingData,
         createdBy: String?,
+        createdBySubject: String?,
     ): Int =
         withContext(Dispatchers.IO) {
             dataSource.connection.use { connection ->
                 connection.prepareStatement(INSERT_SQL).use { statement ->
                     statement.bindData(data)
                     statement.setString(PARAM_SEVENTH, createdBy)
+                    statement.setString(PARAM_EIGHTH, createdBySubject)
                     statement.executeQuery().use { rows ->
                         rows.next()
                         rows.getInt("id")
@@ -163,8 +167,8 @@ private fun ResultSet.toBookingSummary() =
         status = BookingStatus.valueOf(getString("status")),
     )
 
-private fun ResultSet.toBooking() =
-    Booking(
+private fun ResultSet.toBookingRecord() =
+    BookingRecord(
         id = getInt("id"),
         nameType = BookingNameType.valueOf(getString("name_type")),
         name = getString("name"),
@@ -175,6 +179,7 @@ private fun ResultSet.toBooking() =
         adminNotes = getString("admin_notes"),
         status = BookingStatus.valueOf(getString("status")),
         createdBy = getString("created_by"),
+        createdBySubject = getString("created_by_subject"),
     )
 
 private fun ResultSet.localDate(column: String): LocalDate {

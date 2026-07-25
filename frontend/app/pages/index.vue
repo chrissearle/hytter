@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { data: reference } = useReference()
+const { data: session } = useSession()
 
 const { seasonYear, seasonStart, seasonEnd } = seasonRangeFor(new Date())
 
@@ -48,6 +49,7 @@ useSeoMeta({
       :bookings="bookings ?? []"
       :season-start="seasonStart"
       :season-end="seasonEnd"
+      :linkable="session?.authenticated ?? false"
     />
 
     <div class="mt-4 flex flex-wrap items-center gap-4 text-xs text-forest-600 dark:text-birch-300">

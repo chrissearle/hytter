@@ -5,7 +5,17 @@ const route = useRoute()
 const router = useRouter()
 const id = route.params.id as string
 
+definePageMeta({ middleware: 'authenticated' })
+
 const { data: booking, status, error: fetchError } = useBooking(id)
+
+// canEdit is resolved by the backend against the session. Redirect rather than
+// let someone fill in a form the API will refuse to save.
+watchEffect(() => {
+  if (booking.value && !booking.value.canEdit) {
+    navigateTo(`/bookings/${id}`)
+  }
+})
 
 const submitting = ref(false)
 const submitError = ref<string | null>(null)

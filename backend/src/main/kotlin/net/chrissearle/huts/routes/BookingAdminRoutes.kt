@@ -25,34 +25,28 @@ fun Route.bookingAdminRoutes(repository: BookingRepository) {
 
 private fun Route.approveBookingRoute(repository: BookingRepository) {
     post("/api/bookings/{id}/approve") {
-        val id = call.parameters["id"]?.toIntOrNull()
+        val rawId = call.parameters["id"]
         val principal = call.principal<HytterPrincipal>()
 
         either {
             requireAdmin(principal)
-            if (id == null) {
-                raise(BookingNotFound(-1))
-            }
+            val id = bookingId(rawId)
             catch({ repository.approve(id) }) { e: SQLException ->
                 raise(DatabaseCallFailed(e.asErrorResponse()))
             }
-            catch({ repository.findById(id) }) { e: SQLException ->
-                raise(DatabaseCallFailed(e.asErrorResponse()))
-            } ?: raise(BookingNotFound(id))
+            repository.findBooking(id).toBooking(canEdit = true)
         }.respond()
     }
 }
 
 private fun Route.deleteBookingRoute(repository: BookingRepository) {
     delete("/api/bookings/{id}") {
-        val id = call.parameters["id"]?.toIntOrNull()
+        val rawId = call.parameters["id"]
         val principal = call.principal<HytterPrincipal>()
 
         either {
             requireAdmin(principal)
-            if (id == null) {
-                raise(BookingNotFound(-1))
-            }
+            val id = bookingId(rawId)
             val deletedRows =
                 catch({ repository.delete(id) }) { e: SQLException ->
                     raise(DatabaseCallFailed(e.asErrorResponse()))

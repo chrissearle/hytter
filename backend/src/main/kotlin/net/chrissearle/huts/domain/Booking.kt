@@ -14,5 +14,11 @@ data class Booking(
     val departureDate: LocalDate,
     val adminNotes: String?,
     val status: BookingStatus,
+    /** Display name of whoever requested it - shown to admins, not used for authorization. */
     val createdBy: String?,
+    /**
+     * Whether the requesting principal may edit this booking. Resolved server-side
+     * so the client never needs the owner's identity to work it out.
+     */
+    val canEdit: Boolean,
 )

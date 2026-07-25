@@ -15,16 +15,16 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.datetime.LocalDate
 import net.chrissearle.huts.TEST_PRINCIPAL_HEADER
-import net.chrissearle.huts.domain.Booking
 import net.chrissearle.huts.domain.BookingNameType
+import net.chrissearle.huts.domain.BookingRecord
 import net.chrissearle.huts.domain.BookingStatus
 import net.chrissearle.huts.domain.Hut
 import net.chrissearle.huts.repository.BookingRepository
 import net.chrissearle.huts.security.AUTH_PROVIDER_NAME
 import net.chrissearle.huts.testHytterApplication
 
-private fun sampleBooking() =
-    Booking(
+private fun sampleRecord() =
+    BookingRecord(
         id = 1,
         nameType = BookingNameType.OPPHAVET,
         name = "Opphavet",
@@ -35,6 +35,7 @@ private fun sampleBooking() =
         adminNotes = null,
         status = BookingStatus.APPROVED,
         createdBy = "Some User",
+        createdBySubject = "user-subject",
     )
 
 class BookingAdminRoutesTest :
@@ -88,7 +89,7 @@ class BookingAdminRoutesTest :
             testApplication {
                 val repository = mockk<BookingRepository>()
                 coEvery { repository.approve(1) } returns 1
-                coEvery { repository.findById(1) } returns sampleBooking()
+                coEvery { repository.findById(1) } returns sampleRecord()
 
                 application {
                     testHytterApplication {

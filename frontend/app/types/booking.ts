@@ -44,7 +44,10 @@ export interface Booking {
   departureDate: string
   adminNotes: string | null
   status: BookingStatus
+  /** Display name of the requester — shown to admins, never used for authorization. */
   createdBy: string | null
+  /** Resolved by the backend against the session; the owner's identity never reaches the client. */
+  canEdit: boolean
 }
 
 export interface BookingInput {

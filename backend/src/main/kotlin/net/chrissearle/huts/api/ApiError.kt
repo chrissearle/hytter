@@ -17,11 +17,12 @@ sealed interface ApiError {
 
 fun ApiError.status() = response.status
 
-fun ApiError.messageMap(): Map<String, ErrorResponse> =
-    when (this) {
-        is UpstreamError -> mapOf("upstream" to upstream, "error" to response)
-        else -> mapOf("error" to response)
-    }
+/**
+ * Only [response] is ever serialized. An [UpstreamError]'s `upstream` detail -
+ * a raw Postgres constraint message, say - stays server-side for the logs: it
+ * describes our internals and has no business reaching a client.
+ */
+fun ApiError.messageMap(): Map<String, ErrorResponse> = mapOf("error" to response)
 
 abstract class UpstreamError(
     open val upstream: ErrorResponse,
@@ -56,6 +57,14 @@ data class BookingNotFound(
     val id: Int,
 ) : ApiError {
     override val response = ErrorResponse(status = HttpStatusCode.NotFound, message = "Booking not found: $id")
+}
+
+/** A malformed id in the path - a bad request, not a missing booking. */
+data class InvalidBookingId(
+    val value: String?,
+) : ApiError {
+    override val response =
+        ErrorResponse(status = HttpStatusCode.BadRequest, message = "Invalid booking id", fieldValue = value)
 }
 
 data class InvalidDateRange(

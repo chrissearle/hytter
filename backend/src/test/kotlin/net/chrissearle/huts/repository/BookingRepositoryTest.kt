@@ -60,7 +60,7 @@ class BookingRepositoryTest :
         }
 
         test("insert then findById round-trips the booking") {
-            val id = repository.insert(bookingData(), createdBy = "Chris")
+            val id = repository.insert(bookingData(), createdBy = "Chris", createdBySubject = "sub-chris")
 
             val booking = repository.findById(id)
 
@@ -73,11 +73,12 @@ class BookingRepositoryTest :
             booking?.departureDate shouldBe LocalDate(2026, 6, 5)
             booking?.status shouldBe BookingStatus.OPEN
             booking?.createdBy shouldBe "Chris"
+            booking?.createdBySubject shouldBe "sub-chris"
         }
 
         test("every hut value survives a round-trip through the check constraint") {
             Hut.entries.forEach { hut ->
-                val id = repository.insert(bookingData(hut = hut), createdBy = null)
+                val id = repository.insert(bookingData(hut = hut), createdBy = null, createdBySubject = null)
 
                 repository.findById(id)?.hut shouldBe hut
             }
@@ -85,7 +86,12 @@ class BookingRepositoryTest :
 
         test("every name type survives a round-trip through the check constraint") {
             BookingNameType.entries.forEach { nameType ->
-                val id = repository.insert(bookingData(nameType = nameType, name = "Someone"), createdBy = null)
+                val id =
+                    repository.insert(
+                        bookingData(nameType = nameType, name = "Someone"),
+                        createdBy = null,
+                        createdBySubject = null,
+                    )
 
                 repository.findById(id)?.nameType shouldBe nameType
             }
@@ -96,7 +102,7 @@ class BookingRepositoryTest :
         }
 
         test("insert with no logged-in creator stores a null created_by") {
-            val id = repository.insert(bookingData(), createdBy = null)
+            val id = repository.insert(bookingData(), createdBy = null, createdBySubject = null)
 
             repository.findById(id)?.createdBy shouldBe null
         }
@@ -109,6 +115,7 @@ class BookingRepositoryTest :
                     departureDate = LocalDate(2026, 6, 15),
                 ),
                 createdBy = null,
+                createdBySubject = null,
             )
             repository.insert(
                 bookingData(
@@ -117,6 +124,7 @@ class BookingRepositoryTest :
                     departureDate = LocalDate(2026, 1, 5),
                 ),
                 createdBy = null,
+                createdBySubject = null,
             )
             repository.insert(
                 bookingData(
@@ -125,6 +133,7 @@ class BookingRepositoryTest :
                     departureDate = LocalDate(2026, 6, 12),
                 ),
                 createdBy = null,
+                createdBySubject = null,
             )
 
             val results = repository.findInRange(LocalDate(2026, 6, 10), LocalDate(2026, 6, 20))
@@ -133,7 +142,7 @@ class BookingRepositoryTest :
         }
 
         test("findInRange carries the hut through to the summary") {
-            repository.insert(bookingData(hut = Hut.TENT_HAMMOCK), createdBy = null)
+            repository.insert(bookingData(hut = Hut.TENT_HAMMOCK), createdBy = null, createdBySubject = null)
 
             val results = repository.findInRange(LocalDate(2026, 6, 1), LocalDate(2026, 6, 30))
 
@@ -141,7 +150,7 @@ class BookingRepositoryTest :
         }
 
         test("update reverts an approved booking to OPEN") {
-            val id = repository.insert(bookingData(), createdBy = null)
+            val id = repository.insert(bookingData(), createdBy = null, createdBySubject = null)
             repository.approve(id)
             repository.findById(id)?.status shouldBe BookingStatus.APPROVED
 
@@ -153,7 +162,7 @@ class BookingRepositoryTest :
         }
 
         test("approve sets status to APPROVED") {
-            val id = repository.insert(bookingData(), createdBy = null)
+            val id = repository.insert(bookingData(), createdBy = null, createdBySubject = null)
 
             repository.approve(id)
 
@@ -161,7 +170,7 @@ class BookingRepositoryTest :
         }
 
         test("delete removes the booking") {
-            val id = repository.insert(bookingData(), createdBy = null)
+            val id = repository.insert(bookingData(), createdBy = null, createdBySubject = null)
 
             val deletedRows = repository.delete(id)
 

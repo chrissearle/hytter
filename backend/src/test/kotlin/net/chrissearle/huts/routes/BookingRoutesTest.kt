@@ -9,6 +9,7 @@ import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -24,16 +25,18 @@ import net.chrissearle.huts.domain.Booking
 import net.chrissearle.huts.domain.BookingData
 import net.chrissearle.huts.domain.BookingInput
 import net.chrissearle.huts.domain.BookingNameType
+import net.chrissearle.huts.domain.BookingRecord
 import net.chrissearle.huts.domain.BookingStatus
 import net.chrissearle.huts.domain.Hut
 import net.chrissearle.huts.repository.BookingRepository
 import net.chrissearle.huts.testHytterApplication
 
-private fun sampleBooking(
+private fun sampleRecord(
     id: Int = 1,
     createdBy: String? = "Some User",
+    createdBySubject: String? = "user-subject",
     status: BookingStatus = BookingStatus.OPEN,
-) = Booking(
+) = BookingRecord(
     id = id,
     nameType = BookingNameType.OPPHAVET,
     name = "Opphavet",
@@ -44,6 +47,7 @@ private fun sampleBooking(
     adminNotes = null,
     status = status,
     createdBy = createdBy,
+    createdBySubject = createdBySubject,
 )
 
 private fun sampleInput() =
@@ -66,7 +70,7 @@ class BookingRoutesTest :
                 application { testHytterApplication { routing { bookingRoutes(repository) } } }
                 val client = createClient { install(ContentNegotiation) { json() } }
 
-                val response = client.get("/api/bookings/99")
+                val response = client.get("/api/bookings/99") { header(TEST_PRINCIPAL_HEADER, "user") }
 
                 response.status shouldBe HttpStatusCode.NotFound
             }
@@ -75,28 +79,127 @@ class BookingRoutesTest :
         test("GET /api/bookings/{id} returns the booking when found") {
             testApplication {
                 val repository = mockk<BookingRepository>()
-                coEvery { repository.findById(1) } returns sampleBooking()
+                coEvery { repository.findById(1) } returns sampleRecord()
 
                 application { testHytterApplication { routing { bookingRoutes(repository) } } }
                 val client = createClient { install(ContentNegotiation) { json() } }
 
-                val response = client.get("/api/bookings/1")
+                val response = client.get("/api/bookings/1") { header(TEST_PRINCIPAL_HEADER, "user") }
 
                 response.status shouldBe HttpStatusCode.OK
                 response.body<Booking>().name shouldBe "Opphavet"
             }
         }
 
-        test("GET /api/bookings/{id} with a non-numeric id returns 404, not 500") {
+        test("GET /api/bookings/{id} with a non-numeric id is a bad request, not a 404 or a 500") {
             testApplication {
                 val repository = mockk<BookingRepository>()
 
                 application { testHytterApplication { routing { bookingRoutes(repository) } } }
                 val client = createClient { install(ContentNegotiation) { json() } }
 
-                val response = client.get("/api/bookings/not-a-number")
+                val response =
+                    client.get("/api/bookings/not-a-number") { header(TEST_PRINCIPAL_HEADER, "user") }
 
-                response.status shouldBe HttpStatusCode.NotFound
+                response.status shouldBe HttpStatusCode.BadRequest
+            }
+        }
+
+        test("GET /api/bookings/{id} is not available to anonymous visitors") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response = client.get("/api/bookings/1")
+
+                response.status shouldBe HttpStatusCode.Unauthorized
+            }
+        }
+
+        test("GET /api/bookings stays public for the calendar") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                coEvery { repository.findInRange(any(), any()) } returns emptyList()
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                client.get("/api/bookings").status shouldBe HttpStatusCode.OK
+            }
+        }
+
+        test("canEdit is true for the owner, matched on subject") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                coEvery { repository.findById(1) } returns
+                    sampleRecord(createdBy = "Renamed Since", createdBySubject = "user-subject")
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response = client.get("/api/bookings/1") { header(TEST_PRINCIPAL_HEADER, "user") }
+
+                response.body<Booking>().canEdit shouldBe true
+            }
+        }
+
+        test("canEdit is false for a different subject even when the display name matches") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                coEvery { repository.findById(1) } returns
+                    sampleRecord(createdBy = "Some User", createdBySubject = "someone-else")
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response = client.get("/api/bookings/1") { header(TEST_PRINCIPAL_HEADER, "user") }
+
+                response.body<Booking>().canEdit shouldBe false
+            }
+        }
+
+        test("canEdit falls back to the display name for rows predating the subject column") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                coEvery { repository.findById(1) } returns
+                    sampleRecord(createdBy = "Some User", createdBySubject = null)
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response = client.get("/api/bookings/1") { header(TEST_PRINCIPAL_HEADER, "user") }
+
+                response.body<Booking>().canEdit shouldBe true
+            }
+        }
+
+        test("canEdit is true for an admin on someone else's booking") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                coEvery { repository.findById(1) } returns sampleRecord(createdBySubject = "someone-else")
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response = client.get("/api/bookings/1") { header(TEST_PRINCIPAL_HEADER, "admin") }
+
+                response.body<Booking>().canEdit shouldBe true
+            }
+        }
+
+        test("a booking never carries the owner's subject on the wire") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                coEvery { repository.findById(1) } returns sampleRecord(createdBySubject = "secret-subject")
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val body = client.get("/api/bookings/1") { header(TEST_PRINCIPAL_HEADER, "user") }.bodyAsText()
+
+                body.contains("secret-subject") shouldBe false
             }
         }
 
@@ -120,8 +223,8 @@ class BookingRoutesTest :
         test("POST /api/bookings creates a booking and records the anonymous creator as null") {
             testApplication {
                 val repository = mockk<BookingRepository>()
-                coEvery { repository.insert(any(), null) } returns 7
-                coEvery { repository.findById(7) } returns sampleBooking(id = 7, createdBy = null)
+                coEvery { repository.insert(any(), null, null) } returns 7
+                coEvery { repository.findById(7) } returns sampleRecord(id = 7, createdBy = null)
 
                 application { testHytterApplication { routing { bookingRoutes(repository) } } }
                 val client = createClient { install(ContentNegotiation) { json() } }
@@ -139,8 +242,8 @@ class BookingRoutesTest :
         test("POST /api/bookings created by a logged-in user records their name as creator") {
             testApplication {
                 val repository = mockk<BookingRepository>()
-                coEvery { repository.insert(any(), "Some User") } returns 7
-                coEvery { repository.findById(7) } returns sampleBooking(id = 7)
+                coEvery { repository.insert(any(), "Some User", "user-subject") } returns 7
+                coEvery { repository.findById(7) } returns sampleRecord(id = 7)
 
                 application { testHytterApplication { routing { bookingRoutes(repository) } } }
                 val client = createClient { install(ContentNegotiation) { json() } }
@@ -160,8 +263,8 @@ class BookingRoutesTest :
             testApplication {
                 val repository = mockk<BookingRepository>()
                 val stored = slot<BookingData>()
-                coEvery { repository.insert(capture(stored), any()) } returns 7
-                coEvery { repository.findById(7) } returns sampleBooking(id = 7)
+                coEvery { repository.insert(capture(stored), any(), any()) } returns 7
+                coEvery { repository.findById(7) } returns sampleRecord(id = 7)
 
                 application { testHytterApplication { routing { bookingRoutes(repository) } } }
                 val client = createClient { install(ContentNegotiation) { json() } }
@@ -180,8 +283,8 @@ class BookingRoutesTest :
             testApplication {
                 val repository = mockk<BookingRepository>()
                 val stored = slot<BookingData>()
-                coEvery { repository.insert(capture(stored), any()) } returns 7
-                coEvery { repository.findById(7) } returns sampleBooking(id = 7)
+                coEvery { repository.insert(capture(stored), any(), any()) } returns 7
+                coEvery { repository.findById(7) } returns sampleRecord(id = 7)
 
                 application { testHytterApplication { routing { bookingRoutes(repository) } } }
                 val client = createClient { install(ContentNegotiation) { json() } }
@@ -237,7 +340,8 @@ class BookingRoutesTest :
         test("PUT /api/bookings/{id} by a non-owning, non-admin user is forbidden") {
             testApplication {
                 val repository = mockk<BookingRepository>()
-                coEvery { repository.findById(1) } returns sampleBooking(createdBy = "Someone Else")
+                coEvery { repository.findById(1) } returns
+                    sampleRecord(createdBy = "Someone Else", createdBySubject = "someone-else")
 
                 application { testHytterApplication { routing { bookingRoutes(repository) } } }
                 val client = createClient { install(ContentNegotiation) { json() } }
@@ -256,7 +360,7 @@ class BookingRoutesTest :
         test("PUT /api/bookings/{id} by the owning user succeeds") {
             testApplication {
                 val repository = mockk<BookingRepository>()
-                coEvery { repository.findById(1) } returns sampleBooking(createdBy = "Some User")
+                coEvery { repository.findById(1) } returns sampleRecord(createdBy = "Some User")
                 coEvery { repository.update(1, any()) } returns 1
 
                 application { testHytterApplication { routing { bookingRoutes(repository) } } }
@@ -276,7 +380,7 @@ class BookingRoutesTest :
         test("PUT /api/bookings/{id} by an admin on someone else's booking succeeds") {
             testApplication {
                 val repository = mockk<BookingRepository>()
-                coEvery { repository.findById(1) } returns sampleBooking(createdBy = "Someone Else")
+                coEvery { repository.findById(1) } returns sampleRecord(createdBy = "Someone Else")
                 coEvery { repository.update(1, any()) } returns 1
 
                 application { testHytterApplication { routing { bookingRoutes(repository) } } }

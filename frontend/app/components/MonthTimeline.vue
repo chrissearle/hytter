@@ -1,4 +1,9 @@
 <script setup lang="ts">
+// Auto-import registers NuxtLink for use as a template *tag*, but `<component
+// :is>` needs a value in script scope. Passing the name as a string does not
+// work either - it renders a literal <NuxtLink> element. Hence the explicit
+// import, which is what Nuxt documents for the dynamic-component case.
+import { NuxtLink } from '#components'
 import type { BookingSummary, Hut, HutItem } from '~/types/booking'
 
 const props = defineProps<{
@@ -7,6 +12,8 @@ const props = defineProps<{
   label: string
   monthStart: number
   monthEnd: number
+  /** Booking detail requires a login, so anonymous visitors get inert blocks. */
+  linkable: boolean
 }>()
 
 const days = computed(() => daysInRange(props.monthStart, props.monthEnd))
@@ -85,16 +92,18 @@ const dayWidthRem = 1.7
             :style="{ left: `calc(${todayIndex} * var(--day-w))` }"
           />
 
-          <NuxtLink
+          <component
+            :is="linkable ? NuxtLink : 'div'"
             v-for="{ booking, startIndex, span } in hutBlocks(hut.value)"
             :key="booking.id"
-            :to="`/bookings/${booking.id}`"
-            class="absolute top-1 flex h-8 items-center truncate rounded-md px-2 text-xs font-medium shadow-sm transition hover:brightness-95"
-            :class="
+            :to="linkable ? `/bookings/${booking.id}` : undefined"
+            class="absolute top-1 flex h-8 items-center truncate rounded-md px-2 text-xs font-medium shadow-sm"
+            :class="[
+              linkable ? 'transition hover:brightness-95' : '',
               booking.status === 'APPROVED'
                 ? 'bg-ember-500 text-birch-50'
                 : 'border border-dashed border-forest-400 bg-forest-50 text-forest-700 dark:bg-forest-900 dark:text-birch-100'
-            "
+            ]"
             :style="{
               left: `calc(${startIndex} * var(--day-w) + 2px)`,
               width: `calc(${span} * var(--day-w) - 4px)`
@@ -102,7 +111,7 @@ const dayWidthRem = 1.7
             :title="`${booking.name} · ${booking.arrivalDate} – ${booking.departureDate}`"
           >
             {{ booking.name }}
-          </NuxtLink>
+          </component>
         </div>
       </div>
     </div>

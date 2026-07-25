@@ -10,15 +10,24 @@ class ApiErrorTest :
             BookingNotFound(id = 5).messageMap().keys shouldBe setOf("error")
         }
 
-        test("messageMap for an UpstreamError includes both 'upstream' and 'error'") {
-            val upstream = ErrorResponse(status = HttpStatusCode.BadGateway, message = "boom")
+        test("messageMap for an UpstreamError keeps the upstream detail server-side") {
+            val upstream =
+                ErrorResponse(
+                    status = HttpStatusCode.BadGateway,
+                    message = """ERROR: insert violates foreign key constraint "bookings_hut_fkey"""",
+                )
             val error = DatabaseCallFailed(upstream)
 
             val map = error.messageMap()
 
-            map.keys shouldBe setOf("upstream", "error")
-            map["upstream"] shouldBe upstream
+            map.keys shouldBe setOf("error")
             map["error"] shouldBe error.response
+        }
+
+        test("an UpstreamError's client-facing message names no internals") {
+            val upstream = ErrorResponse(status = HttpStatusCode.BadGateway, message = "relation does not exist")
+
+            DatabaseCallFailed(upstream).response.message shouldBe "call to Database failed"
         }
 
         test("status() returns the response's status code") {
