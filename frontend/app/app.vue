@@ -2,6 +2,7 @@
 import type { DropdownMenuItem } from '@nuxt/ui'
 
 const { data: session } = useSession()
+const { data: buildVersion } = useVersion()
 
 useHead({
   meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1' }],
@@ -74,6 +75,12 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
     <UFooter>
       <template #left>
         <p class="text-sm text-muted">Hytter — booking for Opphavet, Sørkisrampen &amp; venner</p>
+      </template>
+
+      <template #right>
+        <p v-if="buildVersion" class="font-mono text-xs text-muted">
+          {{ buildVersion.version }}
+        </p>
       </template>
     </UFooter>
   </UApp>

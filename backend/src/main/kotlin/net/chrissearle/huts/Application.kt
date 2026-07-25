@@ -11,12 +11,15 @@ import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.routing.routing
 import kotlinx.serialization.json.Json
+import net.chrissearle.huts.api.configureStatusPages
 import net.chrissearle.huts.config.DatabaseConfig
 import net.chrissearle.huts.config.runMigrations
 import net.chrissearle.huts.monitoring.configureMonitoring
 import net.chrissearle.huts.repository.BookingRepository
 import net.chrissearle.huts.routes.authRoutes
 import net.chrissearle.huts.routes.bookingRoutes
+import net.chrissearle.huts.routes.healthRoutes
+import net.chrissearle.huts.routes.versionRoute
 import net.chrissearle.huts.security.AuthConfig
 import net.chrissearle.huts.security.TokenRefresher
 import net.chrissearle.huts.security.configureHytterAuth
@@ -47,6 +50,8 @@ fun Application.module() {
         json()
     }
 
+    configureStatusPages()
+
     configureSessions(authConfig)
 
     val httpClient =
@@ -73,6 +78,8 @@ fun Application.module() {
     }
 
     routing {
+        versionRoute()
+        healthRoutes(dataSource)
         bookingRoutes(bookingRepository)
 
         if (!authConfig.disabled) {

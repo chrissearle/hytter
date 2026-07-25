@@ -6,11 +6,14 @@ import { defineEventHandler, readRawBody, send, setResponseStatus } from 'h3'
 // still redirects the browser straight back to /callback on this origin.
 const backend = process.env.NUXT_BACKEND_URL || 'http://localhost:8080'
 
+// /version is proxied so the footer can show what is deployed. /metrics,
+// /health and /ready deliberately are not - those are for the cluster.
 const shouldProxy = (url: string) =>
   (url.startsWith('/api') && !url.startsWith('/api/_')) ||
   url.startsWith('/login') ||
   url.startsWith('/callback') ||
-  url.startsWith('/logout')
+  url.startsWith('/logout') ||
+  url.startsWith('/version')
 
 export default defineEventHandler(async (event) => {
   const url = event.node.req.url || ''

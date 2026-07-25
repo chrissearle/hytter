@@ -99,6 +99,14 @@ data object AdminRequired : ApiError {
     override val response = ErrorResponse(status = HttpStatusCode.Forbidden, message = "Admin role required")
 }
 
+/** Readiness only: the pod leaves the service until the database is back. */
+data class DatabaseUnavailable(
+    val reason: String?,
+) : ApiError {
+    override val response =
+        ErrorResponse(status = HttpStatusCode.ServiceUnavailable, message = "Database unavailable")
+}
+
 data class VersionNotReadable(
     val e: Throwable,
 ) : ApiError {
