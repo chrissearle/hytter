@@ -17,6 +17,7 @@ import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import org.slf4j.event.Level
+import java.util.UUID
 
 private val logger = KotlinLogging.logger {}
 
@@ -43,6 +44,7 @@ fun Application.configureMonitoring() {
 
     install(CallId) {
         header(HttpHeaders.XRequestId)
+        generate { UUID.randomUUID().toString() }
         verify { callId: String -> callId.isNotEmpty() }
     }
 
