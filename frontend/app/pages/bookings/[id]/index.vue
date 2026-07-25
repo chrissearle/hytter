@@ -85,7 +85,7 @@ function statusBadge(bookingStatus: string): { label: string; color: 'success' |
 
 <template>
   <div class="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-    <NuxtLink to="/" class="text-sm text-ember-600 hover:underline dark:text-ember-400">
+    <NuxtLink to="/" class="text-sm text-primary hover:underline">
       ← Tilbake til kalenderen
     </NuxtLink>
 
@@ -100,7 +100,7 @@ function statusBadge(bookingStatus: string): { label: string; color: 'success' |
 
     <div
       v-else-if="status === 'pending'"
-      class="mt-4 flex h-40 items-center justify-center text-sm text-forest-500"
+      class="mt-4 flex h-40 items-center justify-center text-sm text-dimmed"
     >
       Henter booking …
     </div>
@@ -116,7 +116,7 @@ function statusBadge(bookingStatus: string): { label: string; color: 'success' |
       />
 
       <div class="mb-4 flex items-center justify-between">
-        <h1 class="font-display text-2xl text-forest-900 dark:text-birch-50">
+        <h1 class="font-display text-2xl text-highlighted">
           {{ hutDisplayName(reference, booking.hut) }}
         </h1>
         <div class="flex items-center gap-3">
@@ -156,35 +156,29 @@ function statusBadge(bookingStatus: string): { label: string; color: 'success' |
 
       <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <dt class="text-xs uppercase tracking-wide text-forest-500 dark:text-birch-400">Navn</dt>
-          <dd class="mt-1 text-forest-800 dark:text-birch-100">
+          <dt class="text-xs uppercase tracking-wide text-dimmed">Navn</dt>
+          <dd class="mt-1 text-default">
             {{ booking.name }}
           </dd>
         </div>
 
         <div>
-          <dt class="text-xs uppercase tracking-wide text-forest-500 dark:text-birch-400">
-            Antall personer
-          </dt>
-          <dd class="mt-1 text-forest-800 dark:text-birch-100">
+          <dt class="text-xs uppercase tracking-wide text-dimmed">Antall personer</dt>
+          <dd class="mt-1 text-default">
             {{ booking.numberOfPeople }}
           </dd>
         </div>
 
         <div>
-          <dt class="text-xs uppercase tracking-wide text-forest-500 dark:text-birch-400">
-            Ankomst
-          </dt>
-          <dd class="mt-1 text-forest-800 dark:text-birch-100">
+          <dt class="text-xs uppercase tracking-wide text-dimmed">Ankomst</dt>
+          <dd class="mt-1 text-default">
             {{ booking.arrivalDate }}
           </dd>
         </div>
 
         <div>
-          <dt class="text-xs uppercase tracking-wide text-forest-500 dark:text-birch-400">
-            Avreise
-          </dt>
-          <dd class="mt-1 text-forest-800 dark:text-birch-100">
+          <dt class="text-xs uppercase tracking-wide text-dimmed">Avreise</dt>
+          <dd class="mt-1 text-default">
             {{ booking.departureDate }}
           </dd>
         </div>
@@ -212,10 +206,8 @@ function statusBadge(bookingStatus: string): { label: string; color: 'success' |
       </div>
 
       <div v-else-if="booking.adminNotes" class="mt-6">
-        <dt class="text-xs uppercase tracking-wide text-forest-500 dark:text-birch-400">
-          Notater fra admin
-        </dt>
-        <dd class="mt-1 whitespace-pre-line text-forest-800 dark:text-birch-100">
+        <dt class="text-xs uppercase tracking-wide text-dimmed">Notater fra admin</dt>
+        <dd class="mt-1 whitespace-pre-line text-default">
           {{ booking.adminNotes }}
         </dd>
       </div>

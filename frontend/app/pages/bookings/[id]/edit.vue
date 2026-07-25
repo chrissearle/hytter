@@ -42,16 +42,11 @@ async function onSubmit(input: BookingInput) {
 
 <template>
   <div class="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-    <NuxtLink
-      :to="`/bookings/${id}`"
-      class="text-sm text-ember-600 hover:underline dark:text-ember-400"
-    >
+    <NuxtLink :to="`/bookings/${id}`" class="text-sm text-primary hover:underline">
       ← Tilbake til booking
     </NuxtLink>
 
-    <h1 class="mt-4 mb-6 font-display text-2xl text-forest-900 dark:text-birch-50">
-      Rediger booking
-    </h1>
+    <h1 class="mt-4 mb-6 font-display text-2xl text-highlighted">Rediger booking</h1>
 
     <UAlert
       v-if="fetchError"
@@ -63,7 +58,7 @@ async function onSubmit(input: BookingInput) {
 
     <div
       v-else-if="status === 'pending'"
-      class="flex h-40 items-center justify-center text-sm text-forest-500"
+      class="flex h-40 items-center justify-center text-sm text-dimmed"
     >
       Henter booking …
     </div>

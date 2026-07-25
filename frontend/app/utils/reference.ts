@@ -17,14 +17,18 @@ export function nameTypeItem(
 }
 
 /**
- * A free-text name field is shown for the free-text types, except for a
- * personal booking by a logged-in user - there the name comes from their token.
+ * A free-text name field is shown for the free-text types. The exception is a
+ * personal booking by a logged-in user, where the name comes from their token -
+ * unless they are an admin, who takes bookings on behalf of people who ring up
+ * rather than use the site and so must be able to name someone else.
  */
 export function needsNameInput(
   reference: Reference | null | undefined,
   nameType: BookingNameType,
-  authenticated: boolean
+  authenticated: boolean,
+  isAdmin = false
 ): boolean {
   if (!nameTypeItem(reference, nameType)?.isFreeText) return false
-  return !(nameType === 'PERSONAL' && authenticated)
+  if (nameType !== 'PERSONAL') return true
+  return !authenticated || isAdmin
 }

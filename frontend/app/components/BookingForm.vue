@@ -23,14 +23,43 @@ const state = reactive({
   departureDate: props.booking?.departureDate ?? ''
 })
 
+const isAdmin = computed(() => session.value?.isAdmin ?? false)
+
 // The stored name is derived server-side for every type except these, so the
 // free-text field is the only case where what's typed here is what's saved.
 const requiresName = computed(() =>
-  needsNameInput(reference.value, state.nameType, session.value?.authenticated ?? false)
+  needsNameInput(
+    reference.value,
+    state.nameType,
+    session.value?.authenticated ?? false,
+    isAdmin.value
+  )
 )
 
 const showsPersonalHint = computed(
-  () => state.nameType === 'PERSONAL' && (session.value?.authenticated ?? false)
+  () => state.nameType === 'PERSONAL' && (session.value?.authenticated ?? false) && !isAdmin.value
+)
+
+const nameLabel = computed(() =>
+  state.nameType === 'PERSONAL' ? 'Hvem gjelder bookingen?' : 'Angi navn'
+)
+
+const nameHelp = computed(() =>
+  state.nameType === 'PERSONAL' && isAdmin.value
+    ? 'Som admin kan du booke på vegne av andre. Ditt eget navn er fylt inn — endre det om bookingen gjelder noen andre.'
+    : undefined
+)
+
+// Admins get their own name prefilled when they pick "Personlig", so booking for
+// themselves stays one click while booking for someone else is just an edit.
+// Client-side only: this fires on user interaction, never during SSR.
+watch(
+  () => [state.nameType, isAdmin.value] as const,
+  ([nameType, admin]) => {
+    if (nameType === 'PERSONAL' && admin && !state.name) {
+      state.name = session.value?.name ?? ''
+    }
+  }
 )
 
 function validate(): FormError[] {
@@ -71,11 +100,11 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       />
     </UFormField>
 
-    <UFormField v-if="requiresName" label="Angi navn" name="name">
+    <UFormField v-if="requiresName" :label="nameLabel" :help="nameHelp" name="name">
       <UInput v-model="state.name" :maxlength="NAME_MAX_LENGTH" class="w-full" placeholder="Navn" />
     </UFormField>
 
-    <p v-else-if="showsPersonalHint" class="text-sm text-forest-600 dark:text-birch-300">
+    <p v-else-if="showsPersonalHint" class="text-sm text-muted">
       Booking registreres som <strong>{{ session?.name }}</strong>
     </p>
 

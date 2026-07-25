@@ -55,6 +55,14 @@ describe('needsNameInput', () => {
     expect(needsNameInput(reference, 'PERSONAL', true)).toBe(false)
   })
 
+  it('is true for a personal booking by an admin, who may book for someone else', () => {
+    expect(needsNameInput(reference, 'PERSONAL', true, true)).toBe(true)
+  })
+
+  it('is still false for a fixed group even for an admin', () => {
+    expect(needsNameInput(reference, 'OPPHAVET', true, true)).toBe(false)
+  })
+
   it('is false while reference data is still loading', () => {
     expect(needsNameInput(null, 'OTHER', false)).toBe(false)
   })

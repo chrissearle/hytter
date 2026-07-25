@@ -26,30 +26,44 @@ function hutBlocks(hut: Hut) {
   return blocksForHut(props.bookings, hut, props.monthStart, props.monthEnd)
 }
 
-const dayWidthRem = 1.7
+function isWeekend(day: Date) {
+  return day.getUTCDay() === 0 || day.getUTCDay() === 6
+}
+
+/**
+ * Blocks are placed as a percentage of the track rather than in fixed units, so
+ * the day columns can flex to fill whatever width is available. Each day cell is
+ * `flex-1` off a zero basis, giving exactly 1/n of the track, which is what
+ * keeps these offsets aligned with the grid behind them.
+ */
+function trackPosition(startIndex: number, span: number) {
+  const count = days.value.length
+  return {
+    left: `calc(${startIndex} / ${count} * 100% + 2px)`,
+    width: `calc(${span} / ${count} * 100% - 4px)`
+  }
+}
+
+const todayOffset = computed(() => `calc(${todayIndex.value} / ${days.value.length} * 100%)`)
 </script>
 
 <template>
-  <div class="overflow-x-auto rounded-lg border border-forest-200 dark:border-forest-800">
-    <div class="min-w-max" :style="{ '--day-w': `${dayWidthRem}rem` }">
+  <!-- min-w keeps the grid legible on a phone, where it scrolls instead. -->
+  <div class="overflow-x-auto rounded-lg border border-default">
+    <div class="min-w-[46rem]">
       <!-- Day-of-month header -->
-      <div class="flex border-b border-forest-200 dark:border-forest-800">
+      <div class="flex border-b border-default">
         <div
-          class="w-32 shrink-0 border-r border-forest-200 py-1.5 pl-3 font-display text-sm capitalize tracking-wide text-forest-800 dark:border-forest-800 dark:text-birch-100"
+          class="w-40 shrink-0 border-r border-default py-1.5 pl-3 font-display text-sm capitalize tracking-wide text-highlighted"
         >
           {{ label }}
         </div>
-        <div class="flex">
+        <div class="flex flex-1">
           <div
             v-for="(day, i) in days"
             :key="i"
-            class="shrink-0 border-r border-forest-50 py-1.5 text-center text-[0.65rem] text-forest-500 last:border-r-0 dark:border-forest-900/60 dark:text-birch-400"
-            :class="[
-              day.getUTCDay() === 0 || day.getUTCDay() === 6
-                ? 'bg-birch-100/60 dark:bg-forest-950/40'
-                : ''
-            ]"
-            :style="{ width: 'var(--day-w)' }"
+            class="flex-1 basis-0 border-r border-muted py-1.5 text-center text-[0.65rem] text-dimmed last:border-r-0"
+            :class="[isWeekend(day) ? 'bg-elevated' : '']"
           >
             {{ day.getUTCDate() }}
           </div>
@@ -57,39 +71,28 @@ const dayWidthRem = 1.7
       </div>
 
       <!-- Hut rows -->
-      <div
-        v-for="hut in huts"
-        :key="hut.value"
-        class="flex border-b border-forest-100 last:border-b-0 dark:border-forest-900"
-      >
+      <div v-for="hut in huts" :key="hut.value" class="flex border-b border-muted last:border-b-0">
         <div
-          class="flex w-32 shrink-0 items-center border-r border-forest-200 px-3 py-2.5 text-sm text-forest-700 dark:border-forest-800 dark:text-birch-200"
+          class="flex w-40 shrink-0 items-center gap-2 border-r border-default px-3 py-2.5 text-sm text-default"
         >
+          <span class="h-2.5 w-2.5 shrink-0 rounded-full" :class="hutStyle(hut.value).swatch" />
           {{ hut.displayName }}
         </div>
 
-        <div
-          class="relative"
-          :style="{ width: `calc(${days.length} * var(--day-w))`, height: '2.75rem' }"
-        >
+        <div class="relative flex-1" style="height: 3.5rem">
           <div class="absolute inset-0 flex">
             <div
               v-for="(day, i) in days"
               :key="i"
-              class="shrink-0 border-r border-forest-50 dark:border-forest-900/60"
-              :class="[
-                day.getUTCDay() === 0 || day.getUTCDay() === 6
-                  ? 'bg-birch-100/60 dark:bg-forest-950/40'
-                  : ''
-              ]"
-              :style="{ width: 'var(--day-w)' }"
+              class="flex-1 basis-0 border-r border-muted"
+              :class="[isWeekend(day) ? 'bg-elevated' : '']"
             />
           </div>
 
           <div
             v-if="todayIndex >= 0"
-            class="absolute top-0 z-10 h-full w-px bg-ember-500"
-            :style="{ left: `calc(${todayIndex} * var(--day-w))` }"
+            class="absolute top-0 z-10 h-full w-px bg-primary"
+            :style="{ left: todayOffset }"
           />
 
           <component
@@ -97,20 +100,18 @@ const dayWidthRem = 1.7
             v-for="{ booking, startIndex, span } in hutBlocks(hut.value)"
             :key="booking.id"
             :to="linkable ? `/bookings/${booking.id}` : undefined"
-            class="absolute top-1 flex h-8 items-center truncate rounded-md px-2 text-xs font-medium shadow-sm"
+            class="absolute top-1.5 flex flex-col justify-center overflow-hidden rounded-md px-2 py-1 leading-tight shadow-sm"
             :class="[
-              linkable ? 'transition hover:brightness-95' : '',
-              booking.status === 'APPROVED'
-                ? 'bg-ember-500 text-birch-50'
-                : 'border border-dashed border-forest-400 bg-forest-50 text-forest-700 dark:bg-forest-900 dark:text-birch-100'
+              linkable ? 'transition hover:brightness-110' : '',
+              hutBlockClass(booking.hut, booking.status === 'APPROVED')
             ]"
-            :style="{
-              left: `calc(${startIndex} * var(--day-w) + 2px)`,
-              width: `calc(${span} * var(--day-w) - 4px)`
-            }"
-            :title="`${booking.name} · ${booking.arrivalDate} – ${booking.departureDate}`"
+            :style="{ ...trackPosition(startIndex, span), height: '2.75rem' }"
+            :title="`${hut.displayName} · ${booking.name} · ${booking.arrivalDate} – ${booking.departureDate}`"
           >
-            {{ booking.name }}
+            <span class="truncate text-[0.6rem] uppercase tracking-wide opacity-80">
+              {{ hut.displayName }}
+            </span>
+            <span class="truncate text-xs font-medium">{{ booking.name }}</span>
           </component>
         </div>
       </div>

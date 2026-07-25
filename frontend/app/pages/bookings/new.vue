@@ -27,11 +27,11 @@ async function onSubmit(input: BookingInput) {
 
 <template>
   <div class="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-    <NuxtLink to="/" class="text-sm text-ember-600 hover:underline dark:text-ember-400">
+    <NuxtLink to="/" class="text-sm text-primary hover:underline">
       ← Tilbake til kalenderen
     </NuxtLink>
 
-    <h1 class="mt-4 mb-6 font-display text-2xl text-forest-900 dark:text-birch-50">Ny booking</h1>
+    <h1 class="mt-4 mb-6 font-display text-2xl text-highlighted">Ny booking</h1>
 
     <UAlert
       v-if="error"

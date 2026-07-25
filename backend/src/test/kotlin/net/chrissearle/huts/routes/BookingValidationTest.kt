@@ -51,6 +51,37 @@ class BookingValidationTest :
             result.getOrNull()?.name shouldBe "Kari Nordmann"
         }
 
+        test("an admin may record a personal booking under someone else's name") {
+            val input = validInput(BookingNameType.PERSONAL).copy(name = "Mormor")
+
+            val result = either { input.resolve(principalName = "Chris Searle", isAdmin = true) }
+
+            result.getOrNull()?.name shouldBe "Mormor"
+        }
+
+        test("an admin with no name supplied still books as themselves") {
+            val result =
+                either { validInput(BookingNameType.PERSONAL).resolve(principalName = "Chris", isAdmin = true) }
+
+            result.getOrNull()?.name shouldBe "Chris"
+        }
+
+        test("a regular user cannot register a personal booking under another name") {
+            val input = validInput(BookingNameType.PERSONAL).copy(name = "Someone Else")
+
+            val result = either { input.resolve(principalName = "Chris Searle", isAdmin = false) }
+
+            result.getOrNull()?.name shouldBe "Chris Searle"
+        }
+
+        test("an admin naming someone else on a fixed group is still ignored") {
+            val input = validInput(BookingNameType.HA12).copy(name = "Not HA12")
+
+            val result = either { input.resolve(principalName = "Chris", isAdmin = true) }
+
+            result.getOrNull()?.name shouldBe "HA12"
+        }
+
         test("personal booking by an anonymous visitor with no name is rejected") {
             val result = either { validInput(BookingNameType.PERSONAL).resolve(principalName = null) }
 

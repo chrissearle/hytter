@@ -32,9 +32,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
   <UApp>
     <UHeader>
       <template #left>
-        <NuxtLink to="/" class="font-display text-lg text-forest-900 dark:text-birch-50">
-          Hytter
-        </NuxtLink>
+        <NuxtLink to="/" class="font-display text-lg text-highlighted"> Hytter </NuxtLink>
       </template>
 
       <template #right>

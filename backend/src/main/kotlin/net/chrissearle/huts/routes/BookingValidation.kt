@@ -34,7 +34,10 @@ fun SQLException.asErrorResponse(): ErrorResponse {
  * deserialization and never reaches this point.
  */
 context(_: Raise<ApiError>)
-fun BookingInput.resolve(principalName: String?): BookingData {
+fun BookingInput.resolve(
+    principalName: String?,
+    isAdmin: Boolean = false,
+): BookingData {
     if (numberOfPeople <= 0) {
         raise(InvalidNumberOfPeople)
     }
@@ -44,7 +47,7 @@ fun BookingInput.resolve(principalName: String?): BookingData {
 
     return BookingData(
         nameType = nameType,
-        name = resolveName(principalName),
+        name = resolveName(principalName, isAdmin),
         numberOfPeople = numberOfPeople,
         hut = hut,
         arrivalDate = arrivalDate,
@@ -54,31 +57,28 @@ fun BookingInput.resolve(principalName: String?): BookingData {
 
 /**
  * A fixed group always stores its own label - a client cannot claim to be one.
- * "Personlig" uses the logged-in user's `name` claim; an anonymous visitor has
- * no claim to draw on, so they type it in, as they do for "Annet".
+ *
+ * "Personlig" normally uses the logged-in user's `name` claim, so a regular user
+ * cannot register a personal booking under someone else's name. An **admin** may:
+ * they take bookings on behalf of people who ring up rather than use the site, so
+ * a name they supply wins. An anonymous visitor has no claim to draw on and types
+ * it in, as everyone does for "Annet".
  */
 context(_: Raise<ApiError>)
-private fun BookingInput.resolveName(principalName: String?): String {
+private fun BookingInput.resolveName(
+    principalName: String?,
+    isAdmin: Boolean,
+): String {
+    val supplied = name?.trim().orEmpty()
+    val ownName = principalName?.trim()?.takeIf { it.isNotEmpty() }
+    val adminNamedSomeoneElse = isAdmin && supplied.isNotEmpty()
     val fromPrincipal =
-        principalName
-            ?.trim()
-            ?.takeIf { nameType == BookingNameType.PERSONAL && it.isNotEmpty() }
+        ownName.takeIf { nameType == BookingNameType.PERSONAL && !adminNamedSomeoneElse }
 
     return when {
-        !nameType.isFreeText -> {
-            nameType.displayName
-        }
-
-        fromPrincipal != null -> {
-            fromPrincipal
-        }
-
-        else -> {
-            val supplied = name?.trim().orEmpty()
-            if (supplied.isEmpty() || supplied.length > NAME_MAX_LENGTH) {
-                raise(NameRequired)
-            }
-            supplied
-        }
+        !nameType.isFreeText -> nameType.displayName
+        fromPrincipal != null -> fromPrincipal
+        supplied.isEmpty() || supplied.length > NAME_MAX_LENGTH -> raise(NameRequired)
+        else -> supplied
     }
 }

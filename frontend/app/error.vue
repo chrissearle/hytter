@@ -25,15 +25,15 @@ function goHome() {
 <template>
   <UApp>
     <div class="mx-auto flex min-h-screen max-w-2xl flex-col justify-center px-4 py-8 sm:px-6">
-      <p class="font-display text-sm uppercase tracking-[0.2em] text-ember-600 dark:text-ember-400">
+      <p class="font-display text-sm uppercase tracking-[0.2em] text-primary">
         {{ error.statusCode }}
       </p>
 
-      <h1 class="mt-1 font-display text-3xl text-forest-900 dark:text-birch-50">
+      <h1 class="mt-1 font-display text-3xl text-highlighted">
         {{ title }}
       </h1>
 
-      <p class="mt-3 max-w-lg text-sm text-forest-700 dark:text-birch-300">
+      <p class="mt-3 max-w-lg text-sm text-muted">
         {{ description }}
       </p>
 

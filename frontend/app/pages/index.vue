@@ -13,17 +13,17 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+  <!-- Wider than the form pages: the calendar is the one view that earns the
+       width, and this is used on a desktop. 7xl matches UHeader's container. -->
+  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
     <header class="mb-6">
-      <p class="font-display text-sm uppercase tracking-[0.2em] text-ember-600 dark:text-ember-400">
+      <p class="font-display text-sm uppercase tracking-[0.2em] text-primary">
         Sesong {{ seasonYear }}
       </p>
-      <h1 class="mt-1 font-display text-3xl text-forest-900 dark:text-birch-50">
-        Booking-kalender
-      </h1>
-      <p class="mt-2 max-w-2xl text-sm text-forest-700 dark:text-birch-300">
-        Oversikt over ønskede og godkjente opphold på hyttene, 1. juni – 31. august. Fylte felt er
-        godkjent, stiplede felt er under vurdering.
+      <h1 class="mt-1 font-display text-3xl text-highlighted">Booking-kalender</h1>
+      <p class="mt-2 max-w-2xl text-sm text-muted">
+        Oversikt over ønskede og godkjente opphold på hyttene, 1. juni – 31. august. Hver hytte har
+        sin egen farge. Fylte felt er godkjent, stiplede felt er under vurdering.
       </p>
     </header>
 
@@ -47,7 +47,7 @@ useSeoMeta({
 
     <div
       v-else-if="status === 'pending'"
-      class="flex h-40 items-center justify-center text-sm text-forest-500"
+      class="flex h-40 items-center justify-center text-sm text-dimmed"
     >
       Henter bookinger …
     </div>
@@ -61,17 +61,29 @@ useSeoMeta({
       :linkable="session?.hasAccess ?? false"
     />
 
-    <div class="mt-4 flex flex-wrap items-center gap-4 text-xs text-forest-600 dark:text-birch-300">
-      <span class="flex items-center gap-1.5">
-        <span class="h-3 w-3 rounded-sm bg-ember-500" /> Godkjent
-      </span>
-      <span class="flex items-center gap-1.5">
+    <!-- Two independent keys: hue says which hut, fill vs dashes says status. -->
+    <div class="mt-4 flex flex-col gap-3 text-xs text-muted sm:flex-row sm:flex-wrap sm:gap-6">
+      <div class="flex flex-wrap items-center gap-3">
         <span
-          class="h-3 w-3 rounded-sm border border-dashed border-forest-400 bg-forest-50 dark:bg-forest-900"
-        />
-        Forespurt
-      </span>
-      <span class="flex items-center gap-1.5"> <span class="h-3 w-px bg-ember-500" /> I dag </span>
+          v-for="hut in reference?.huts ?? []"
+          :key="hut.value"
+          class="flex items-center gap-1.5"
+        >
+          <span class="h-3 w-3 rounded-sm" :class="hutStyle(hut.value).swatch" />
+          {{ hut.displayName }}
+        </span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="flex items-center gap-1.5">
+          <span class="h-3 w-5 rounded-sm bg-zinc-500" /> Godkjent
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="h-3 w-5 rounded-sm border-2 border-dashed border-zinc-500 bg-zinc-500/15" />
+          Forespurt
+        </span>
+        <span class="flex items-center gap-1.5"> <span class="h-3 w-px bg-primary" /> I dag </span>
+      </div>
     </div>
   </div>
 </template>
