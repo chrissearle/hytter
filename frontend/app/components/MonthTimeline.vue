@@ -12,11 +12,17 @@ const props = defineProps<{
   label: string
   monthStart: number
   monthEnd: number
+  /** Shared across all months so a day column is the same width everywhere. */
+  columns: number
   /** Booking detail requires a login, so anonymous visitors get inert blocks. */
   linkable: boolean
 }>()
 
 const days = computed(() => daysInRange(props.monthStart, props.monthEnd))
+
+// Every day cell is 1/columns of the track, so months with fewer days end short
+// rather than widening their columns. Blocks below use the same denominator.
+const columnWidth = computed(() => `calc(100% / ${props.columns})`)
 
 const todayIndex = computed(() =>
   todayIndexInRange(props.monthStart, days.value.length, new Date())
@@ -37,14 +43,16 @@ function isWeekend(day: Date) {
  * keeps these offsets aligned with the grid behind them.
  */
 function trackPosition(startIndex: number, span: number) {
-  const count = days.value.length
+  const count = props.columns
+  // 4px inset each side leaves an 8px gutter between adjacent bookings, so two
+  // blocks of the same hut colour read as distinct pills rather than one bar.
   return {
-    left: `calc(${startIndex} / ${count} * 100% + 2px)`,
-    width: `calc(${span} / ${count} * 100% - 4px)`
+    left: `calc(${startIndex} / ${count} * 100% + 4px)`,
+    width: `calc(${span} / ${count} * 100% - 8px)`
   }
 }
 
-const todayOffset = computed(() => `calc(${todayIndex.value} / ${days.value.length} * 100%)`)
+const todayOffset = computed(() => `calc(${todayIndex.value} / ${props.columns} * 100%)`)
 </script>
 
 <template>
@@ -62,7 +70,8 @@ const todayOffset = computed(() => `calc(${todayIndex.value} / ${days.value.leng
           <div
             v-for="(day, i) in days"
             :key="i"
-            class="flex-1 basis-0 border-r border-muted py-1.5 text-center text-[0.65rem] text-dimmed last:border-r-0"
+            class="shrink-0 border-r border-muted py-1.5 text-center text-[0.65rem] text-dimmed last:border-r-0"
+            :style="{ width: columnWidth }"
             :class="[isWeekend(day) ? 'bg-elevated' : '']"
           >
             {{ day.getUTCDate() }}
@@ -84,7 +93,8 @@ const todayOffset = computed(() => `calc(${todayIndex.value} / ${days.value.leng
             <div
               v-for="(day, i) in days"
               :key="i"
-              class="flex-1 basis-0 border-r border-muted"
+              class="shrink-0 border-r border-muted"
+              :style="{ width: columnWidth }"
               :class="[isWeekend(day) ? 'bg-elevated' : '']"
             />
           </div>
