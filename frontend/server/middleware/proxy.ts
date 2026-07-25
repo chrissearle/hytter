@@ -1,4 +1,11 @@
-import { defineEventHandler, readRawBody, send, setResponseStatus } from 'h3'
+import {
+  appendResponseHeader,
+  defineEventHandler,
+  getRequestHeaders,
+  readRawBody,
+  setResponseHeader,
+  setResponseStatus
+} from 'h3'
 
 // Same-origin from the browser's point of view: it only ever talks to this
 // frontend. In production the backend has no ingress of its own, so this is
@@ -35,14 +42,14 @@ const shouldSkipHeader = (key: string) => {
 }
 
 export default defineEventHandler(async (event) => {
-  const url = event.node.req.url || ''
+  const url = event.path || ''
   if (!shouldProxy(url)) return
 
   const targetUrl = backend + url
-  const method = event.node.req.method || 'GET'
+  const method = event.method || 'GET'
 
   const headers: Record<string, string> = {}
-  for (const [key, value] of Object.entries(event.node.req.headers)) {
+  for (const [key, value] of Object.entries(getRequestHeaders(event))) {
     if (typeof value === 'string') {
       headers[key] = value
     }
@@ -70,30 +77,27 @@ export default defineEventHandler(async (event) => {
     // rejection. Same error envelope the backend itself uses.
     console.error(`[proxy] ${method} ${url} failed:`, cause)
     setResponseStatus(event, 502)
-    event.node.res.setHeader('content-type', 'application/json')
-    return send(
-      event,
-      JSON.stringify({
-        error: {
-          status: { value: 502, description: 'Bad Gateway' },
-          message: 'Backend unavailable'
-        }
-      })
-    )
+    setResponseHeader(event, 'content-type', 'application/json')
+    return {
+      error: {
+        status: { value: 502, description: 'Bad Gateway' },
+        message: 'Backend unavailable'
+      }
+    }
   }
 
   setResponseStatus(event, response.status)
 
   // Use getSetCookie() to correctly forward multiple Set-Cookie headers
   for (const cookie of response.headers.getSetCookie()) {
-    event.node.res.appendHeader('set-cookie', cookie)
+    appendResponseHeader(event, 'set-cookie', cookie)
   }
 
   for (const [key, value] of response.headers.entries()) {
     if (shouldSkipHeader(key)) continue
-    event.node.res.setHeader(key, value)
+    setResponseHeader(event, key, value)
   }
 
   const data = await response.arrayBuffer()
-  return send(event, Buffer.from(data))
+  return Buffer.from(data)
 })

@@ -17,7 +17,7 @@ const val TEST_PRINCIPAL_HEADER = "X-Test-Principal"
 val adminPrincipal =
     HytterPrincipal(subject = "admin-subject", name = "Admin", roles = setOf("admin", "user"))
 val userPrincipal =
-    HytterPrincipal(subject = "user-subject", name = "Some User", roles = setOf("user"))
+    HytterPrincipal(subject = "user-subject", name = "Some User", roles = setOf("user", "group-opphavet"))
 
 /**
  * Authenticated against the shared realm but granted no `hytter` client role -

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { hutDisplayName, nameTypeItem, needsNameInput } from './reference'
-import type { Reference } from '~/types/booking'
+import { allowedNameTypes, hutDisplayName, nameTypeItem, needsNameInput } from './reference'
+import type { Reference, Session } from '~/types/booking'
 
 const reference: Reference = {
   huts: [
@@ -65,5 +65,48 @@ describe('needsNameInput', () => {
 
   it('is false while reference data is still loading', () => {
     expect(needsNameInput(null, 'OTHER', false)).toBe(false)
+  })
+})
+
+describe('allowedNameTypes', () => {
+  const session = (over: Partial<Session>): Session => ({
+    authenticated: true,
+    name: 'Test',
+    isAdmin: false,
+    hasAccess: true,
+    group: null,
+    ...over
+  })
+
+  const values = (session: Session | null) =>
+    allowedNameTypes(reference, session, undefined).map((item) => item.value)
+
+  it('gives an anonymous visitor the full list', () => {
+    expect(values(null)).toEqual(['OPPHAVET', 'SORKISRAMPEN', 'HA12', 'PERSONAL', 'OTHER'])
+  })
+
+  it('gives an admin the full list', () => {
+    expect(values(session({ isAdmin: true }))).toEqual([
+      'OPPHAVET',
+      'SORKISRAMPEN',
+      'HA12',
+      'PERSONAL',
+      'OTHER'
+    ])
+  })
+
+  it('limits a member to their own group and Personlig', () => {
+    expect(values(session({ group: 'HA12' }))).toEqual(['HA12', 'PERSONAL'])
+  })
+
+  it('limits a groupless user to Personlig only', () => {
+    expect(values(session({ group: null }))).toEqual(['PERSONAL'])
+  })
+
+  it('keeps a booking’s existing type visible even when off-limits', () => {
+    const kept = allowedNameTypes(reference, session({ group: 'HA12' }), 'SORKISRAMPEN').map(
+      (item) => item.value
+    )
+    expect(kept).toEqual(['SORKISRAMPEN', 'HA12', 'PERSONAL'])
   })
 })

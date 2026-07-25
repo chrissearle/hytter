@@ -19,7 +19,7 @@ const val OAUTH_PROVIDER_NAME = "hytter-oauth"
 const val CALLBACK_PATH = "/callback"
 
 private val devPrincipal =
-    HytterPrincipal(subject = "dev-admin", name = "Admin", roles = setOf("admin", "user"))
+    HytterPrincipal(subject = "dev-admin", name = "Admin", roles = setOf("admin", "user", "group-ha12"))
 
 private class DevAuthenticationProvider(
     config: Config,

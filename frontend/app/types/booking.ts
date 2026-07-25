@@ -68,4 +68,10 @@ export interface Session {
    * with other sites, so an account there does not by itself grant access.
    */
   hasAccess: boolean
+  /**
+   * The single fixed group this user may book under, or null for admins (who may
+   * book any group) and users with no group assigned. Drives the name dropdown;
+   * the backend enforces the rule regardless of what the client sends.
+   */
+  group: BookingNameType | null
 }

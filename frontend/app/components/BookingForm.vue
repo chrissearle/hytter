@@ -14,8 +14,25 @@ const emit = defineEmits<{
 const { data: reference } = useReference()
 const { data: session } = useSession()
 
+// Editing keeps the booking's own type. Otherwise a member defaults to their
+// group; a logged-in non-admin without a group can only book Personlig, and
+// everyone else (admin, anonymous) starts on the first fixed group.
+const defaultNameType = ((): BookingNameType => {
+  if (props.booking) return props.booking.nameType
+  if (session.value?.group) return session.value.group
+  if (session.value?.authenticated && !session.value.isAdmin) return 'PERSONAL'
+  return 'OPPHAVET'
+})()
+
+const nameTypeItems = computed(() =>
+  allowedNameTypes(reference.value, session.value, props.booking?.nameType).map((item) => ({
+    label: item.displayName,
+    value: item.value
+  }))
+)
+
 const state = reactive({
-  nameType: (props.booking?.nameType ?? 'OPPHAVET') as BookingNameType,
+  nameType: defaultNameType,
   name: props.booking?.name ?? '',
   numberOfPeople: props.booking?.numberOfPeople ?? 1,
   hut: (props.booking?.hut ?? 'HULDREBAKKEN') as Hut,
@@ -87,17 +104,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
 <template>
   <UForm :state="state" :validate="validate" class="flex flex-col gap-4" @submit="onSubmit">
     <UFormField label="Navn" name="nameType">
-      <USelect
-        v-model="state.nameType"
-        :items="
-          (reference?.nameTypes ?? []).map((item) => ({
-            label: item.displayName,
-            value: item.value
-          }))
-        "
-        value-key="value"
-        class="w-full"
-      />
+      <USelect v-model="state.nameType" :items="nameTypeItems" value-key="value" class="w-full" />
     </UFormField>
 
     <UFormField v-if="requiresName" :label="nameLabel" :help="nameHelp" name="name">

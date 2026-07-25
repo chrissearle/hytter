@@ -95,6 +95,12 @@ data object NotBookingOwner : ApiError {
         ErrorResponse(status = HttpStatusCode.Forbidden, message = "You may only edit your own bookings")
 }
 
+/** A logged-in, non-admin user tried to book under a fixed group that is not theirs. */
+data object GroupNotAllowed : ApiError {
+    override val response =
+        ErrorResponse(status = HttpStatusCode.Forbidden, message = "You may only book under your own group")
+}
+
 /** Authenticated against the shared realm, but with no `hytter` client role. */
 data object AccessRequired : ApiError {
     override val response =

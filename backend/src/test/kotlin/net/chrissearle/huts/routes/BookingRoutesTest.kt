@@ -377,6 +377,25 @@ class BookingRoutesTest :
             }
         }
 
+        test("POST /api/bookings is forbidden when a user books under a group that is not theirs") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                // The test "user" principal belongs to Opphavet, so HA12 is not theirs.
+                val response =
+                    client.post("/api/bookings") {
+                        header(TEST_PRINCIPAL_HEADER, "user")
+                        contentType(ContentType.Application.Json)
+                        setBody(sampleInput().copy(nameType = BookingNameType.HA12))
+                    }
+
+                response.status shouldBe HttpStatusCode.Forbidden
+            }
+        }
+
         test("POST /api/bookings with an unknown hut is a bad request") {
             testApplication {
                 val repository = mockk<BookingRepository>()

@@ -6,12 +6,14 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpStatusCode
 import net.chrissearle.huts.api.ApiError
 import net.chrissearle.huts.api.ErrorResponse
+import net.chrissearle.huts.api.GroupNotAllowed
 import net.chrissearle.huts.api.InvalidDateRange
 import net.chrissearle.huts.api.InvalidNumberOfPeople
 import net.chrissearle.huts.api.NameRequired
 import net.chrissearle.huts.domain.BookingData
 import net.chrissearle.huts.domain.BookingInput
 import net.chrissearle.huts.domain.BookingNameType
+import net.chrissearle.huts.security.HytterPrincipal
 import java.sql.SQLException
 
 const val NAME_MAX_LENGTH = 100
@@ -34,25 +36,38 @@ fun SQLException.asErrorResponse(): ErrorResponse {
  * deserialization and never reaches this point.
  */
 context(_: Raise<ApiError>)
-fun BookingInput.resolve(
-    principalName: String?,
-    isAdmin: Boolean = false,
-): BookingData {
+fun BookingInput.resolve(principal: HytterPrincipal?): BookingData {
     if (numberOfPeople <= 0) {
         raise(InvalidNumberOfPeople)
     }
     if (departureDate < arrivalDate) {
         raise(InvalidDateRange("'departureDate' must not be before 'arrivalDate'"))
     }
+    ensureGroupAllowed(principal)
 
     return BookingData(
         nameType = nameType,
-        name = resolveName(principalName, isAdmin),
+        name = resolveName(principal?.name, principal?.isAdmin == true),
         numberOfPeople = numberOfPeople,
         hut = hut,
         arrivalDate = arrivalDate,
         departureDate = departureDate,
     )
+}
+
+/**
+ * Enforces which name a booking may be labelled with. Admins and anonymous
+ * visitors may pick anything - admins book on anyone's behalf, and an anonymous
+ * visitor has no group to be held to. A logged-in non-admin is limited to their
+ * own group and [BookingNameType.PERSONAL]: no other group, and not even
+ * [BookingNameType.OTHER], since a signed-in member books as themselves.
+ */
+context(_: Raise<ApiError>)
+private fun BookingInput.ensureGroupAllowed(principal: HytterPrincipal?) {
+    if (principal == null || principal.isAdmin) return
+    if (nameType != BookingNameType.PERSONAL && nameType != principal.group) {
+        raise(GroupNotAllowed)
+    }
 }
 
 /**

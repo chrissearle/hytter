@@ -90,7 +90,7 @@ private fun Route.createBookingRoute(repository: BookingRepository) {
         val principal = call.principal<HytterPrincipal>()
 
         either {
-            val data = call.receive<BookingInput>().resolve(principal?.name, principal?.isAdmin == true)
+            val data = call.receive<BookingInput>().resolve(principal)
             val id =
                 catch({
                     repository.insert(
@@ -118,7 +118,7 @@ private fun Route.updateBookingRoute(repository: BookingRepository) {
             if (!existing.canBeEditedBy(user)) {
                 raise(NotBookingOwner)
             }
-            val data = call.receive<BookingInput>().resolve(user.name, user.isAdmin)
+            val data = call.receive<BookingInput>().resolve(user)
             catch({ repository.update(id, data, keepStatus = user.isAdmin) }) { e: SQLException ->
                 raise(DatabaseCallFailed(e.asErrorResponse()))
             }
