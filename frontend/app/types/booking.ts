@@ -63,4 +63,9 @@ export interface Session {
   authenticated: boolean
   name: string | null
   isAdmin: boolean
+  /**
+   * Logged in, but granted no `hytter` client role. The Keycloak realm is shared
+   * with other sites, so an account there does not by itself grant access.
+   */
+  hasAccess: boolean
 }

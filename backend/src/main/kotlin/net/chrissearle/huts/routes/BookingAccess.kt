@@ -3,10 +3,12 @@ package net.chrissearle.huts.routes
 import arrow.core.raise.Raise
 import arrow.core.raise.catch
 import arrow.core.raise.context.raise
+import net.chrissearle.huts.api.AccessRequired
 import net.chrissearle.huts.api.ApiError
 import net.chrissearle.huts.api.BookingNotFound
 import net.chrissearle.huts.api.DatabaseCallFailed
 import net.chrissearle.huts.api.InvalidBookingId
+import net.chrissearle.huts.api.PrincipalMissing
 import net.chrissearle.huts.domain.BookingRecord
 import net.chrissearle.huts.repository.BookingRepository
 import net.chrissearle.huts.security.HytterPrincipal
@@ -24,8 +26,23 @@ fun BookingRecord.isOwnedBy(principal: HytterPrincipal): Boolean =
     }
 
 fun BookingRecord.canBeEditedBy(principal: HytterPrincipal?): Boolean {
-    if (principal == null) return false
+    if (principal == null || !principal.hasAccess) return false
     return principal.isAdmin || isOwnedBy(principal)
+}
+
+/**
+ * Returns the principal so callers get the non-null type back - a Raise-based
+ * check cannot smart-cast the argument for them.
+ */
+context(_: Raise<ApiError>)
+fun requireAccess(principal: HytterPrincipal?): HytterPrincipal {
+    if (principal == null) {
+        raise(PrincipalMissing)
+    }
+    if (!principal.hasAccess) {
+        raise(AccessRequired)
+    }
+    return principal
 }
 
 /** A path id that is not a number is a bad request, not a missing booking. */

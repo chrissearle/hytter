@@ -57,6 +57,15 @@ admin notes field to communicate details to the affected requester(s).
 | User      |        ✓        |        ✓         |      ✓      |
 | Anonymous |        ✓        |        ✗         |      ✗      |
 
+"User" means **holding the `hytter` client role `user` (or `admin`)** — not merely
+being signed in. The Keycloak realm (`chrissearle.net`) is shared with other
+sites, so an account there grants nothing on its own: `HytterPrincipal.hasAccess`
+gates the booking detail and edit endpoints, and `/api/session` reports
+`hasAccess` so the GUI can explain the difference rather than just refusing.
+
+Anonymous visitors keep the calendar itself — the blocks, the hut, the booking
+name and the approved/requested status — but not the detail behind a block.
+
 ## Auth
 
 - Login via **Keycloak OIDC**.

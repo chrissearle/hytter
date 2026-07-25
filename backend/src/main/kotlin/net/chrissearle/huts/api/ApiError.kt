@@ -95,6 +95,12 @@ data object NotBookingOwner : ApiError {
         ErrorResponse(status = HttpStatusCode.Forbidden, message = "You may only edit your own bookings")
 }
 
+/** Authenticated against the shared realm, but with no `hytter` client role. */
+data object AccessRequired : ApiError {
+    override val response =
+        ErrorResponse(status = HttpStatusCode.Forbidden, message = "You do not have access to this application")
+}
+
 data object AdminRequired : ApiError {
     override val response = ErrorResponse(status = HttpStatusCode.Forbidden, message = "Admin role required")
 }

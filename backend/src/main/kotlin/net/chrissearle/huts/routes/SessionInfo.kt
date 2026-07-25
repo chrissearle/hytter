@@ -12,6 +12,11 @@ data class SessionInfo(
     val authenticated: Boolean,
     val name: String?,
     val isAdmin: Boolean,
+    /**
+     * Logged in but without a `hytter` client role: the realm is shared, so this
+     * is a real state the GUI has to explain rather than silently 403.
+     */
+    val hasAccess: Boolean,
 )
 
 fun Route.sessionRoute() {
@@ -22,6 +27,7 @@ fun Route.sessionRoute() {
                 authenticated = principal != null,
                 name = principal?.name,
                 isAdmin = principal?.isAdmin ?: false,
+                hasAccess = principal?.hasAccess ?: false,
             ),
         )
     }

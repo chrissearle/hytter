@@ -19,7 +19,15 @@ val adminPrincipal =
 val userPrincipal =
     HytterPrincipal(subject = "user-subject", name = "Some User", roles = setOf("user"))
 
-private val testPrincipals = mapOf("admin" to adminPrincipal, "user" to userPrincipal)
+/**
+ * Authenticated against the shared realm but granted no `hytter` client role -
+ * holding an account in the realm must not by itself grant access.
+ */
+val noRolePrincipal =
+    HytterPrincipal(subject = "stranger-subject", name = "Realm Stranger", roles = setOf("monit-access"))
+
+private val testPrincipals =
+    mapOf("admin" to adminPrincipal, "user" to userPrincipal, "norole" to noRolePrincipal)
 
 /**
  * Stands in for the real Keycloak session auth in tests: reads [TEST_PRINCIPAL_HEADER]

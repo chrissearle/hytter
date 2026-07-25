@@ -28,6 +28,15 @@ useSeoMeta({
     </header>
 
     <UAlert
+      v-if="session?.authenticated && !session.hasAccess"
+      color="warning"
+      variant="subtle"
+      title="Du har ikke tilgang"
+      description="Du er logget inn, men kontoen din har ikke fått tilgang til hyttebooking ennå. Ta kontakt med en administrator."
+      class="mb-4"
+    />
+
+    <UAlert
       v-if="error"
       color="error"
       variant="subtle"
@@ -49,7 +58,7 @@ useSeoMeta({
       :bookings="bookings ?? []"
       :season-start="seasonStart"
       :season-end="seasonEnd"
-      :linkable="session?.authenticated ?? false"
+      :linkable="session?.hasAccess ?? false"
     />
 
     <div class="mt-4 flex flex-wrap items-center gap-4 text-xs text-forest-600 dark:text-birch-300">

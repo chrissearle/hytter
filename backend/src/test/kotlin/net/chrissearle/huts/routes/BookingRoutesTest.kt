@@ -118,6 +118,85 @@ class BookingRoutesTest :
             }
         }
 
+        test("GET /api/bookings/{id} is forbidden for a realm account with no hytter role") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response = client.get("/api/bookings/1") { header(TEST_PRINCIPAL_HEADER, "norole") }
+
+                response.status shouldBe HttpStatusCode.Forbidden
+            }
+        }
+
+        test("PUT /api/bookings/{id} is forbidden for a realm account with no hytter role") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response =
+                    client.put("/api/bookings/1") {
+                        header(TEST_PRINCIPAL_HEADER, "norole")
+                        contentType(ContentType.Application.Json)
+                        setBody(sampleInput())
+                    }
+
+                response.status shouldBe HttpStatusCode.Forbidden
+            }
+        }
+
+        test("a booking is never editable by an account without a hytter role") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                // Owns it by subject, but has no role granting access.
+                coEvery { repository.findById(1) } returns
+                    sampleRecord(createdBySubject = "stranger-subject")
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val response = client.get("/api/bookings/1") { header(TEST_PRINCIPAL_HEADER, "norole") }
+
+                response.status shouldBe HttpStatusCode.Forbidden
+            }
+        }
+
+        test("GET /api/session reports access for a user with the role") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val session =
+                    client.get("/api/session") { header(TEST_PRINCIPAL_HEADER, "user") }.body<SessionInfo>()
+
+                session.authenticated shouldBe true
+                session.hasAccess shouldBe true
+                session.isAdmin shouldBe false
+            }
+        }
+
+        test("GET /api/session reports authenticated but without access for a realm stranger") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                val session =
+                    client.get("/api/session") { header(TEST_PRINCIPAL_HEADER, "norole") }.body<SessionInfo>()
+
+                session.authenticated shouldBe true
+                session.hasAccess shouldBe false
+                session.name shouldBe "Realm Stranger"
+            }
+        }
+
         test("GET /api/bookings stays public for the calendar") {
             testApplication {
                 val repository = mockk<BookingRepository>()
