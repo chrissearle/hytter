@@ -161,6 +161,17 @@ class BookingRepositoryTest :
             updated?.status shouldBe BookingStatus.OPEN
         }
 
+        test("an admin edit keeps an approved booking approved") {
+            val id = repository.insert(bookingData(), createdBy = null, createdBySubject = null)
+            repository.approve(id)
+
+            repository.update(id, bookingData(name = "Updated"), keepStatus = true)
+
+            val updated = repository.findById(id)
+            updated?.name shouldBe "Updated"
+            updated?.status shouldBe BookingStatus.APPROVED
+        }
+
         test("approve sets status to APPROVED") {
             val id = repository.insert(bookingData(), createdBy = null, createdBySubject = null)
 

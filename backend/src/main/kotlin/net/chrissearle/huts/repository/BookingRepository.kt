@@ -56,11 +56,22 @@ private const val INSERT_SQL =
     RETURNING id
     """
 
+// A user editing their booking sends it back for re-approval - that is the
+// domain rule. An admin editing one is doing the approving, so their edit must
+// not silently un-approve it.
 private const val UPDATE_SQL =
     """
     UPDATE bookings
     SET name_type = ?, name = ?, number_of_people = ?, hut = ?, arrival_date = ?, departure_date = ?,
         status = 'OPEN', updated_at = now()
+    WHERE id = ?
+    """
+
+private const val UPDATE_KEEPING_STATUS_SQL =
+    """
+    UPDATE bookings
+    SET name_type = ?, name = ?, number_of_people = ?, hut = ?, arrival_date = ?, departure_date = ?,
+        updated_at = now()
     WHERE id = ?
     """
 
@@ -126,13 +137,16 @@ class BookingRepository(
             }
         }
 
+    /** [keepStatus] is for admin edits - see the SQL above. */
     suspend fun update(
         id: Int,
         data: BookingData,
+        keepStatus: Boolean = false,
     ): Int =
         withContext(Dispatchers.IO) {
+            val sql = if (keepStatus) UPDATE_KEEPING_STATUS_SQL else UPDATE_SQL
             dataSource.connection.use { connection ->
-                connection.prepareStatement(UPDATE_SQL).use { statement ->
+                connection.prepareStatement(sql).use { statement ->
                     statement.bindData(data)
                     statement.setInt(PARAM_SEVENTH, id)
                     statement.executeUpdate()

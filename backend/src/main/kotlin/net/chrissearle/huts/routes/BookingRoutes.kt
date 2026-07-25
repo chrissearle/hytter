@@ -123,7 +123,7 @@ private fun Route.updateBookingRoute(repository: BookingRepository) {
                 raise(NotBookingOwner)
             }
             val data = call.receive<BookingInput>().resolve(principal.name)
-            catch({ repository.update(id, data) }) { e: SQLException ->
+            catch({ repository.update(id, data, keepStatus = principal.isAdmin) }) { e: SQLException ->
                 raise(DatabaseCallFailed(e.asErrorResponse()))
             }
             repository.findBooking(id).toBooking(canEdit = true)

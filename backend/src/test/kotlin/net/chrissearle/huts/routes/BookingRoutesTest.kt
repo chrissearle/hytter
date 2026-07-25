@@ -361,7 +361,7 @@ class BookingRoutesTest :
             testApplication {
                 val repository = mockk<BookingRepository>()
                 coEvery { repository.findById(1) } returns sampleRecord(createdBy = "Some User")
-                coEvery { repository.update(1, any()) } returns 1
+                coEvery { repository.update(1, any(), any()) } returns 1
 
                 application { testHytterApplication { routing { bookingRoutes(repository) } } }
                 val client = createClient { install(ContentNegotiation) { json() } }
@@ -377,11 +377,51 @@ class BookingRoutesTest :
             }
         }
 
+        test("PUT /api/bookings/{id} by the owner sends it back for re-approval") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                val keepStatus = slot<Boolean>()
+                coEvery { repository.findById(1) } returns sampleRecord(createdBy = "Some User")
+                coEvery { repository.update(1, any(), capture(keepStatus)) } returns 1
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                client.put("/api/bookings/1") {
+                    header(TEST_PRINCIPAL_HEADER, "user")
+                    contentType(ContentType.Application.Json)
+                    setBody(sampleInput())
+                }
+
+                keepStatus.captured shouldBe false
+            }
+        }
+
+        test("PUT /api/bookings/{id} by an admin does not un-approve the booking") {
+            testApplication {
+                val repository = mockk<BookingRepository>()
+                val keepStatus = slot<Boolean>()
+                coEvery { repository.findById(1) } returns sampleRecord(status = BookingStatus.APPROVED)
+                coEvery { repository.update(1, any(), capture(keepStatus)) } returns 1
+
+                application { testHytterApplication { routing { bookingRoutes(repository) } } }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                client.put("/api/bookings/1") {
+                    header(TEST_PRINCIPAL_HEADER, "admin")
+                    contentType(ContentType.Application.Json)
+                    setBody(sampleInput())
+                }
+
+                keepStatus.captured shouldBe true
+            }
+        }
+
         test("PUT /api/bookings/{id} by an admin on someone else's booking succeeds") {
             testApplication {
                 val repository = mockk<BookingRepository>()
                 coEvery { repository.findById(1) } returns sampleRecord(createdBy = "Someone Else")
-                coEvery { repository.update(1, any()) } returns 1
+                coEvery { repository.update(1, any(), any()) } returns 1
 
                 application { testHytterApplication { routing { bookingRoutes(repository) } } }
                 val client = createClient { install(ContentNegotiation) { json() } }
