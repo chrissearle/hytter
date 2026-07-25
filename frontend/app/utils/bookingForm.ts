@@ -1,5 +1,8 @@
 export const NAME_MAX_LENGTH = 100
 
+/** Mirrors ADMIN_NOTES_MAX_LENGTH in BookingAdminRoutes.kt. */
+export const ADMIN_NOTES_MAX_LENGTH = 2000
+
 export interface BookingFormFieldError {
   name: string
   message: string

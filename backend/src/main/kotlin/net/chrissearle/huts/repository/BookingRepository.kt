@@ -66,6 +66,10 @@ private const val UPDATE_SQL =
 
 private const val APPROVE_SQL = "UPDATE bookings SET status = 'APPROVED', updated_at = now() WHERE id = ?"
 
+// Deliberately leaves status alone: annotating a booking and approving it are
+// independent admin actions, and a note must not silently approve anything.
+private const val UPDATE_ADMIN_NOTES_SQL = "UPDATE bookings SET admin_notes = ?, updated_at = now() WHERE id = ?"
+
 private const val DELETE_SQL = "DELETE FROM bookings WHERE id = ?"
 
 class BookingRepository(
@@ -141,6 +145,20 @@ class BookingRepository(
             dataSource.connection.use { connection ->
                 connection.prepareStatement(APPROVE_SQL).use { statement ->
                     statement.setInt(1, id)
+                    statement.executeUpdate()
+                }
+            }
+        }
+
+    suspend fun updateAdminNotes(
+        id: Int,
+        adminNotes: String?,
+    ): Int =
+        withContext(Dispatchers.IO) {
+            dataSource.connection.use { connection ->
+                connection.prepareStatement(UPDATE_ADMIN_NOTES_SQL).use { statement ->
+                    statement.setString(1, adminNotes)
+                    statement.setInt(2, id)
                     statement.executeUpdate()
                 }
             }

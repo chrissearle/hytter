@@ -169,6 +169,39 @@ class BookingRepositoryTest :
             repository.findById(id)?.status shouldBe BookingStatus.APPROVED
         }
 
+        test("setting admin notes leaves an approved booking approved") {
+            val id = repository.insert(bookingData(), createdBy = null, createdBySubject = null)
+            repository.approve(id)
+
+            repository.updateAdminNotes(id, "Du må ha telt de første 2 dagene")
+
+            val updated = repository.findById(id)
+            updated?.adminNotes shouldBe "Du må ha telt de første 2 dagene"
+            updated?.status shouldBe BookingStatus.APPROVED
+        }
+
+        test("admin notes can be cleared") {
+            val id = repository.insert(bookingData(), createdBy = null, createdBySubject = null)
+            repository.updateAdminNotes(id, "Noe tekst")
+
+            repository.updateAdminNotes(id, null)
+
+            repository.findById(id)?.adminNotes shouldBe null
+        }
+
+        test("editing a booking does not wipe the admin's note") {
+            val id = repository.insert(bookingData(), createdBy = null, createdBySubject = null)
+            repository.updateAdminNotes(id, "Handover 25. juli")
+
+            repository.update(id, bookingData(name = "Updated"))
+
+            repository.findById(id)?.adminNotes shouldBe "Handover 25. juli"
+        }
+
+        test("updateAdminNotes on an unknown id affects zero rows") {
+            repository.updateAdminNotes(-1, "Nope") shouldBe 0
+        }
+
         test("delete removes the booking") {
             val id = repository.insert(bookingData(), createdBy = null, createdBySubject = null)
 

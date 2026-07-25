@@ -80,6 +80,16 @@ data object InvalidNumberOfPeople : ApiError {
         ErrorResponse(status = HttpStatusCode.BadRequest, message = "numberOfPeople must be greater than 0")
 }
 
+data class AdminNotesTooLong(
+    val maxLength: Int,
+) : ApiError {
+    override val response =
+        ErrorResponse(
+            status = HttpStatusCode.BadRequest,
+            message = "adminNotes must be at most $maxLength characters",
+        )
+}
+
 data object NotBookingOwner : ApiError {
     override val response =
         ErrorResponse(status = HttpStatusCode.Forbidden, message = "You may only edit your own bookings")

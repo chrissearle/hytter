@@ -12,6 +12,19 @@ const { data: reference } = useReference()
 const actionError = ref<string | null>(null)
 const approving = ref(false)
 const deleting = ref(false)
+const savingNotes = ref(false)
+
+// Reads through to the fetched booking until the admin types, then the draft
+// wins. Deliberately not a watcher seeding a ref: Vue does not run watchers
+// during SSR, so the textarea would render empty on the server and only fill in
+// after hydration. Cleared after a save so it re-syncs with the refetched note.
+const notesDraft = ref<string | null>(null)
+const adminNotes = computed({
+  get: () => notesDraft.value ?? booking.value?.adminNotes ?? '',
+  set: (value: string) => {
+    notesDraft.value = value
+  }
+})
 
 useSeoMeta({
   title: 'Hytter — Booking',
@@ -46,10 +59,23 @@ async function onDelete() {
   }
 }
 
-// TODO(user): map a booking status to a display label + UColor for the badge.
-// Two statuses today (OPEN/APPROVED) but admin notes and future statuses
-// (e.g. a rejected/cancelled state) may want distinct colors later — your
-// call on how much to generalize now vs. keep it a simple two-way branch.
+async function onSaveNotes() {
+  savingNotes.value = true
+  actionError.value = null
+  try {
+    await $fetch(`/api/bookings/${id}/notes`, {
+      method: 'PATCH',
+      body: { adminNotes: adminNotes.value }
+    })
+    await refreshNuxtData(bookingCacheKey(id))
+    notesDraft.value = null
+  } catch {
+    actionError.value = 'Klarte ikke å lagre notatet.'
+  } finally {
+    savingNotes.value = false
+  }
+}
+
 function statusBadge(bookingStatus: string): { label: string; color: 'success' | 'warning' } {
   return bookingStatus === 'APPROVED'
     ? { label: 'Godkjent', color: 'success' }
@@ -164,7 +190,28 @@ function statusBadge(bookingStatus: string): { label: string; color: 'success' |
         </div>
       </dl>
 
-      <div v-if="booking.adminNotes" class="mt-6">
+      <div v-if="session?.isAdmin" class="mt-6">
+        <UFormField
+          label="Notater fra admin"
+          name="adminNotes"
+          help="Vises til den som har booket — f.eks. «Du må ha telt/hengekøye de første 2 dagene»."
+        >
+          <UTextarea
+            v-model="adminNotes"
+            :rows="3"
+            :maxlength="ADMIN_NOTES_MAX_LENGTH"
+            class="w-full"
+            placeholder="Ingen notater"
+          />
+        </UFormField>
+        <div class="mt-2 flex justify-end">
+          <UButton size="sm" variant="soft" :loading="savingNotes" @click="onSaveNotes">
+            Lagre notat
+          </UButton>
+        </div>
+      </div>
+
+      <div v-else-if="booking.adminNotes" class="mt-6">
         <dt class="text-xs uppercase tracking-wide text-forest-500 dark:text-birch-400">
           Notater fra admin
         </dt>
