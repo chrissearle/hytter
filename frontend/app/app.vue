@@ -62,6 +62,17 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
           Logg inn
         </UButton>
 
+        <UButton
+          to="https://github.com/chrissearle/hytter"
+          target="_blank"
+          rel="noopener"
+          size="sm"
+          variant="ghost"
+          color="neutral"
+          icon="i-simple-icons-github"
+          aria-label="Kildekode på GitHub"
+        />
+
         <UColorModeButton />
       </template>
     </UHeader>
