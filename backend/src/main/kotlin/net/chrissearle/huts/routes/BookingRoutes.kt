@@ -13,8 +13,6 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
 import net.chrissearle.huts.api.ApiError
 import net.chrissearle.huts.api.BookingNotFound
 import net.chrissearle.huts.api.DatabaseCallFailed
@@ -25,16 +23,11 @@ import net.chrissearle.huts.api.PrincipalMissing
 import net.chrissearle.huts.api.respond
 import net.chrissearle.huts.domain.BookingInput
 import net.chrissearle.huts.domain.BookingRecord
+import net.chrissearle.huts.domain.currentSeasonRange
 import net.chrissearle.huts.repository.BookingRepository
 import net.chrissearle.huts.security.AUTH_PROVIDER_NAME
 import net.chrissearle.huts.security.HytterPrincipal
 import java.sql.SQLException
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-
-private const val SEASON_START_MONTH = 6
-private const val SEASON_END_MONTH = 8
-private const val SEASON_END_DAY = 31
 
 fun Route.bookingRoutes(repository: BookingRepository) {
     referenceRoutes()
@@ -59,8 +52,9 @@ private fun Route.listBookingsRoute(repository: BookingRepository) {
         val to = call.request.queryParameters["to"]
 
         either {
-            val fromDate = from?.let { parseDate(it) } ?: defaultSeasonStart()
-            val toDate = to?.let { parseDate(it) } ?: defaultSeasonEnd()
+            val (seasonFrom, seasonTo) = currentSeasonRange()
+            val fromDate = from?.let { parseDate(it) } ?: seasonFrom
+            val toDate = to?.let { parseDate(it) } ?: seasonTo
             if (toDate < fromDate) {
                 raise(InvalidDateRange("'to' must not be before 'from'"))
             }
@@ -132,10 +126,3 @@ private fun parseDate(value: String): LocalDate =
     catch({ LocalDate.parse(value) }) { _: IllegalArgumentException ->
         raise(InvalidDateRange("'$value' is not a valid date"))
     }
-
-@OptIn(ExperimentalTime::class)
-private fun currentYear(): Int = Clock.System.todayIn(TimeZone.currentSystemDefault()).year
-
-private fun defaultSeasonStart(): LocalDate = LocalDate(currentYear(), SEASON_START_MONTH, 1)
-
-private fun defaultSeasonEnd(): LocalDate = LocalDate(currentYear(), SEASON_END_MONTH, SEASON_END_DAY)

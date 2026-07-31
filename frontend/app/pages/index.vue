@@ -2,9 +2,29 @@
 const { data: reference } = useReference()
 const { data: session } = useSession()
 
-const { seasonYear, seasonStart, seasonEnd } = seasonRangeFor(new Date())
+const route = useRoute()
+const router = useRouter()
 
-const { data: bookings, status, error } = useBookings(seasonStart, seasonEnd)
+// The season lives in the URL so a view can be linked and survives a reload.
+// `resolveSeason` falls back to the current season for anything malformed or
+// outside the browsable window - the param is user-editable.
+const season = computed(() => resolveSeason(route.query.sesong, new Date()))
+
+const canGoBack = computed(() => season.value.index > MIN_SEASON_INDEX)
+const canGoForward = computed(() => season.value.index < maxSeasonIndex(new Date()))
+
+function goToSeason(index: number) {
+  router.push({ query: { sesong: seasonFromIndex(index).slug } })
+}
+
+const {
+  data: bookings,
+  status,
+  error
+} = useBookings(
+  () => season.value.start,
+  () => season.value.end
+)
 
 useSeoMeta({
   title: 'Hytter — Booking-kalender',
@@ -17,13 +37,34 @@ useSeoMeta({
        width, and this is used on a desktop. 7xl matches UHeader's container. -->
   <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
     <header class="mb-6">
-      <p class="font-display text-sm uppercase tracking-[0.2em] text-primary">
-        Sesong {{ seasonYear }}
-      </p>
+      <div class="flex items-center gap-1">
+        <UButton
+          size="xs"
+          variant="ghost"
+          color="neutral"
+          icon="i-lucide-chevron-left"
+          :disabled="!canGoBack"
+          aria-label="Forrige sesong"
+          @click="goToSeason(season.index - 1)"
+        />
+        <p class="font-display text-sm uppercase tracking-[0.2em] text-primary">
+          Sesong: {{ season.label }}
+        </p>
+        <UButton
+          size="xs"
+          variant="ghost"
+          color="neutral"
+          icon="i-lucide-chevron-right"
+          :disabled="!canGoForward"
+          aria-label="Neste sesong"
+          @click="goToSeason(season.index + 1)"
+        />
+      </div>
       <h1 class="mt-1 font-display text-3xl text-highlighted">Booking-kalender</h1>
       <p class="mt-2 max-w-2xl text-sm text-muted">
-        Oversikt over ønskede og godkjente opphold på hyttene, 1. juni – 31. august. Hver hytte har
-        sin egen farge. Fylte felt er godkjent, stiplede felt er under vurdering.
+        Oversikt over ønskede og godkjente opphold på hyttene,
+        {{ formatSeasonRange(season) }}. Hver hytte har sin egen farge. Fylte felt er godkjent,
+        stiplede felt er under vurdering.
       </p>
     </header>
 
@@ -56,8 +97,8 @@ useSeoMeta({
       v-else
       :huts="reference?.huts ?? []"
       :bookings="bookings ?? []"
-      :season-start="seasonStart"
-      :season-end="seasonEnd"
+      :season-start="season.start"
+      :season-end="season.end"
       :linkable="session?.hasAccess ?? false"
     />
 

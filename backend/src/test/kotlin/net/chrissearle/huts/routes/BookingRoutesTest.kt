@@ -20,6 +20,8 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import net.chrissearle.huts.TEST_PRINCIPAL_HEADER
 import net.chrissearle.huts.domain.Booking
 import net.chrissearle.huts.domain.BookingData
@@ -28,8 +30,12 @@ import net.chrissearle.huts.domain.BookingNameType
 import net.chrissearle.huts.domain.BookingRecord
 import net.chrissearle.huts.domain.BookingStatus
 import net.chrissearle.huts.domain.Hut
+import net.chrissearle.huts.domain.seasonEnd
+import net.chrissearle.huts.domain.seasonStart
 import net.chrissearle.huts.repository.BookingRepository
 import net.chrissearle.huts.testHytterApplication
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 private fun sampleRecord(
     id: Int = 1,
@@ -60,6 +66,7 @@ private fun sampleInput() =
         departureDate = LocalDate(2026, 6, 5),
     )
 
+@OptIn(ExperimentalTime::class)
 class BookingRoutesTest :
     FunSpec({
         test("GET /api/bookings/{id} returns 404 for a missing booking") {
@@ -548,15 +555,23 @@ class BookingRoutesTest :
             }
         }
 
-        test("GET /api/bookings defaults to the current year's June-August season") {
+        test("GET /api/bookings without a range defaults to the current season") {
             testApplication {
                 val repository = mockk<BookingRepository>()
-                coEvery { repository.findInRange(any(), any()) } returns emptyList()
+                val from = slot<LocalDate>()
+                val to = slot<LocalDate>()
+                coEvery { repository.findInRange(capture(from), capture(to)) } returns emptyList()
 
                 application { testHytterApplication { routing { bookingRoutes(repository) } } }
                 val client = createClient { install(ContentNegotiation) { json() } }
 
                 client.get("/api/bookings").status shouldBe HttpStatusCode.OK
+
+                // Asserted against the season helpers rather than fixed dates so
+                // the test does not go red when the wall clock crosses a quarter.
+                val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+                from.captured shouldBe seasonStart(today)
+                to.captured shouldBe seasonEnd(seasonStart(today))
             }
         }
     })

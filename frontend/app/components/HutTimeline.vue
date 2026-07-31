@@ -12,8 +12,9 @@ const props = defineProps<{
 const months = computed(() => buildMonths(props.seasonStart, props.seasonEnd))
 
 // One column width shared by every month, sized to the season's longest month,
-// so a day cell is the same width in June (30 days) as in July/August (31).
-// Shorter months just leave the trailing space empty rather than stretching.
+// so a day cell is the same width in a 30-day month as in a 31-day one.
+// Shorter months just leave the trailing space empty rather than stretching -
+// most visible in winter, where February is up to three days shorter.
 const columns = computed(() =>
   Math.max(1, ...months.value.map((m) => daysInRange(m.monthStart, m.monthEnd).length))
 )
