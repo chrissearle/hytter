@@ -32,6 +32,12 @@ import java.sql.SQLException
 fun Route.bookingRoutes(repository: BookingRepository) {
     referenceRoutes()
 
+    // `optional` is not a dev switch - local auth bypass is AUTH_DISABLED swapping
+    // in DevAuthenticationProvider. It is here because three of these routes serve
+    // anonymous visitors in production: GET /api/bookings (the calendar blocks),
+    // POST /api/bookings (anyone may request a booking) and GET /api/session (which
+    // has to be able to answer `authenticated: false`). The gated routes below
+    // enforce access in-handler via requireAccess.
     authenticate(AUTH_PROVIDER_NAME, optional = true) {
         listBookingsRoute(repository)
         getBookingRoute(repository)

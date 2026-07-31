@@ -4,6 +4,23 @@ import type { DropdownMenuItem } from '@nuxt/ui'
 const { data: session } = useSession()
 const { data: buildVersion } = useVersion()
 
+const toast = useToast()
+
+// The session can end while the tab is open - the Keycloak refresh token has a
+// hard ceiling. Both the navigation middleware and the 401 handler in
+// useApiFetch re-read /api/session, so watching the value catches either route
+// and fires exactly once on the transition.
+watch(session, (next, previous) => {
+  if (!sessionJustExpired(previous, next)) return
+
+  toast.add({
+    title: 'Økten er utløpt',
+    description: 'Du er logget ut. Logg inn på nytt for å se eller endre bookinger.',
+    icon: 'i-lucide-log-out',
+    color: 'warning'
+  })
+})
+
 useHead({
   meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1' }],
   link: [{ rel: 'icon', href: '/favicon.ico' }],

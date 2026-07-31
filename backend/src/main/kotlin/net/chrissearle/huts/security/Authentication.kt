@@ -5,12 +5,13 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.auth.AuthenticationConfig
 import io.ktor.server.auth.AuthenticationContext
+import io.ktor.server.auth.AuthenticationFailedCause
 import io.ktor.server.auth.AuthenticationProvider
 import io.ktor.server.auth.OAuthServerSettings
 import io.ktor.server.auth.oauth
-import io.ktor.server.auth.session
 import io.ktor.server.response.respond
 import io.ktor.server.sessions.clear
+import io.ktor.server.sessions.get
 import io.ktor.server.sessions.sessions
 import io.ktor.server.sessions.set
 
@@ -39,35 +40,70 @@ private fun AuthenticationConfig.dev(name: String?) {
 
 private fun UserSession.toPrincipal() = HytterPrincipal(subject = subject, name = name, roles = roles)
 
+private const val SESSION_CHALLENGE_KEY = "HytterSessionAuth"
+
 /**
  * Every authenticated request runs the session through [TokenRefresher], so a
  * login ends exactly when Keycloak says it does and role changes propagate
  * within one access-token lifetime.
+ *
+ * Deliberately hand-rolled rather than Ktor's `session<UserSession>` provider.
+ * That one picks its failure cause from cookie *presence* alone, so an expired
+ * session - cookie there, but rejected - reports `InvalidCredentials`, which
+ * makes Ktor run the challenge even inside `authenticate(optional = true)` and
+ * 401s the public calendar. See `SessionAuth.kt` / `AuthenticationInterceptors.kt`.
  */
-private fun AuthenticationConfig.keycloakSession(
+private class KeycloakSessionProvider(
+    config: Config,
+    private val refresher: TokenRefresher,
+) : AuthenticationProvider(config) {
+    class Config(
+        name: String?,
+    ) : AuthenticationProvider.Config(name)
+
+    override suspend fun onAuthenticate(context: AuthenticationContext) {
+        val call = context.call
+
+        val principal =
+            call.sessions.get<UserSession>()?.let { session ->
+                when (val outcome = refresher.ensureFresh(session)) {
+                    is SessionOutcome.Valid -> {
+                        outcome.session.toPrincipal()
+                    }
+
+                    is SessionOutcome.Refreshed -> {
+                        call.sessions.set(outcome.session)
+                        outcome.session.toPrincipal()
+                    }
+
+                    SessionOutcome.Expired -> {
+                        call.sessions.clear<UserSession>()
+                        null
+                    }
+                }
+            }
+
+        if (principal != null) {
+            context.principal(name, principal)
+            return
+        }
+
+        // Always NoCredentials, never InvalidCredentials: an expired session has
+        // just been cleared, so this caller genuinely is anonymous from here on.
+        // That lets optional routes carry on serving them, while a required
+        // `authenticate` block still challenges.
+        context.challenge(SESSION_CHALLENGE_KEY, AuthenticationFailedCause.NoCredentials) { challenge, challengeCall ->
+            challengeCall.respond(HttpStatusCode.Unauthorized)
+            challenge.complete()
+        }
+    }
+}
+
+internal fun AuthenticationConfig.keycloakSession(
     name: String?,
     refresher: TokenRefresher,
 ) {
-    session<UserSession>(name) {
-        validate { session ->
-            when (val outcome = refresher.ensureFresh(session)) {
-                is SessionOutcome.Valid -> {
-                    outcome.session.toPrincipal()
-                }
-
-                is SessionOutcome.Refreshed -> {
-                    sessions.set(outcome.session)
-                    outcome.session.toPrincipal()
-                }
-
-                SessionOutcome.Expired -> {
-                    sessions.clear<UserSession>()
-                    null
-                }
-            }
-        }
-        challenge { call.respond(HttpStatusCode.Unauthorized) }
-    }
+    register(KeycloakSessionProvider(KeycloakSessionProvider.Config(name), refresher))
 }
 
 private fun AuthenticationConfig.keycloakOAuth(
