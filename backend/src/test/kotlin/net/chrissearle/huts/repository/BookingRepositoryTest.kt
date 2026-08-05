@@ -56,7 +56,7 @@ class BookingRepositoryTest :
         }
 
         beforeEach {
-            dataSource.connection.use { it.prepareStatement("DELETE FROM bookings").execute() }
+            dataSource.connection.use { connection -> connection.prepareStatement("DELETE FROM bookings").execute() }
         }
 
         test("insert then findById round-trips the booking") {

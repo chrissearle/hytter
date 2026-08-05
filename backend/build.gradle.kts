@@ -59,3 +59,9 @@ kotlin {
 detekt {
     buildUponDefaultConfig = true
 }
+
+// Detekt 2.x makes the type-resolution tasks the real entry point, and they are
+// not attached to `check` by default.
+tasks.check {
+    dependsOn(tasks.detektMain, tasks.detektTest)
+}

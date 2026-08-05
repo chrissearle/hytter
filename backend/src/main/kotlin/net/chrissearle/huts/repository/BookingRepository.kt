@@ -1,5 +1,6 @@
 package net.chrissearle.huts.repository
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
@@ -85,12 +86,13 @@ private const val DELETE_SQL = "DELETE FROM bookings WHERE id = ?"
 
 class BookingRepository(
     private val dataSource: DataSource,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     suspend fun findInRange(
         from: LocalDate,
         to: LocalDate,
     ): List<BookingSummary> =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             dataSource.connection.use { connection ->
                 connection.prepareStatement(FIND_IN_RANGE_SQL).use { statement ->
                     statement.setObject(1, to.toJavaLocalDate())
@@ -107,7 +109,7 @@ class BookingRepository(
         }
 
     suspend fun findById(id: Int): BookingRecord? =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             dataSource.connection.use { connection ->
                 connection.prepareStatement(FIND_BY_ID_SQL).use { statement ->
                     statement.setInt(1, id)
@@ -123,7 +125,7 @@ class BookingRepository(
         createdBy: String?,
         createdBySubject: String?,
     ): Int =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             dataSource.connection.use { connection ->
                 connection.prepareStatement(INSERT_SQL).use { statement ->
                     statement.bindData(data)
@@ -143,7 +145,7 @@ class BookingRepository(
         data: BookingData,
         keepStatus: Boolean = false,
     ): Int =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             val sql = if (keepStatus) UPDATE_KEEPING_STATUS_SQL else UPDATE_SQL
             dataSource.connection.use { connection ->
                 connection.prepareStatement(sql).use { statement ->
@@ -155,7 +157,7 @@ class BookingRepository(
         }
 
     suspend fun approve(id: Int): Int =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             dataSource.connection.use { connection ->
                 connection.prepareStatement(APPROVE_SQL).use { statement ->
                     statement.setInt(1, id)
@@ -168,7 +170,7 @@ class BookingRepository(
         id: Int,
         adminNotes: String?,
     ): Int =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             dataSource.connection.use { connection ->
                 connection.prepareStatement(UPDATE_ADMIN_NOTES_SQL).use { statement ->
                     statement.setString(1, adminNotes)
@@ -179,7 +181,7 @@ class BookingRepository(
         }
 
     suspend fun delete(id: Int): Int =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             dataSource.connection.use { connection ->
                 connection.prepareStatement(DELETE_SQL).use { statement ->
                     statement.setInt(1, id)

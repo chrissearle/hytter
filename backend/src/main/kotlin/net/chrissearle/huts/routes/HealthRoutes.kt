@@ -6,6 +6,7 @@ import arrow.core.raise.either
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -44,8 +45,8 @@ fun Route.healthRoutes(dataSource: DataSource) {
     }
 }
 
-private suspend fun DataSource.verifyConnection() =
-    withContext(Dispatchers.IO) {
+private suspend fun DataSource.verifyConnection(dispatcher: CoroutineDispatcher = Dispatchers.IO) =
+    withContext(dispatcher) {
         connection.use { connection ->
             connection.createStatement().use { statement ->
                 statement.queryTimeout = READY_QUERY_TIMEOUT_SECONDS
