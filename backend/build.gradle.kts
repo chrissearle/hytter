@@ -50,6 +50,18 @@ tasks.withType<Test>().configureEach {
 
 application {
     mainClass.set("net.chrissearle.huts.ApplicationKt")
+    applicationName = "hytter-backend"
+}
+
+// Names the app jar, so the Dockerfile's lib/hytter-backend-*.jar glob does not
+// depend on rootProject.name.
+base {
+    archivesName = "hytter-backend"
+}
+
+// installDist is the only distribution we ship.
+listOf("distTar", "distZip").forEach { name ->
+    tasks.named(name) { enabled = false }
 }
 
 kotlin {
