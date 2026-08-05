@@ -6,7 +6,7 @@
     {
       "matchDatasources": ["docker"],
       "matchPackageNames": ["eclipse-temurin"],
-      "allowedVersions": "<=22"
+      "allowedVersions": "<=25"
     },
     {
       "matchDatasources": ["docker"],
@@ -21,7 +21,7 @@
     {
       "matchDatasources": ["java-version"],
       "matchDepNames": ["java"],
-      "allowedVersions": "<=22"
+      "allowedVersions": "<=25"
     }
   ]
 }
