@@ -22,7 +22,7 @@
     "tailwindcss": "4.3.3"
   },
   "devDependencies": {
-    "@nuxt/eslint": "1.16.0",
+    "@nuxt/eslint": "1.17.0",
     "@types/node": "26.1.2",
     "@vue/test-utils": "2.4.11",
     "eslint": "10.8.0",
