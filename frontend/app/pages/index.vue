@@ -32,9 +32,11 @@ useSeoMeta({
 })
 </script>
 
+<!--
+  Wider than the form pages: the calendar is the one view that earns the
+  width, and this is used on a desktop. 7xl matches UHeader's container.
+-->
 <template>
-  <!-- Wider than the form pages: the calendar is the one view that earns the
-       width, and this is used on a desktop. 7xl matches UHeader's container. -->
   <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
     <header class="mb-6">
       <div class="flex items-center gap-1">
