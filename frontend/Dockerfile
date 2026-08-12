@@ -4,7 +4,7 @@ FROM node:26-trixie-slim AS build
 
 ENV CI=true
 
-RUN npm install -g pnpm@11.20.0
+RUN npm install -g pnpm@11.21.0
 
 WORKDIR /app
 
