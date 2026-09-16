@@ -2,7 +2,7 @@
 kotlin = "2.4.20"
 detekt = "2.0.0-alpha.6"
 kotlinter = "5.7.0"
-ktor = "3.5.2"
+ktor = "3.6.0"
 logback = "1.6.3"
 flyway = "13.6.0"
 postgresql = "42.7.13"
