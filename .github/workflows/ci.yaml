@@ -101,7 +101,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=backend-amd64
 
   backend-build-arm64:
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-26.04-arm
     needs: [backend-meta, backend-test]
     env:
       IMAGE_BASE: ghcr.io/${{ github.repository_owner }}/hytter-backend
@@ -272,7 +272,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=frontend-amd64
 
   frontend-build-arm64:
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-26.04-arm
     needs: [frontend-meta, frontend-check]
     env:
       IMAGE_BASE: ghcr.io/${{ github.repository_owner }}/hytter-frontend
