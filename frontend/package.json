@@ -27,7 +27,7 @@
     "@vue/test-utils": "2.5.1",
     "eslint": "10.11.0",
     "lint-staged": "17.5.1",
-    "prettier": "3.9.8",
+    "prettier": "3.9.9",
     "typescript": "6.0.3",
     "vitest": "5.0.1",
     "vue-tsc": "3.3.11"
