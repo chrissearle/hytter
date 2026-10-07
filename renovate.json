@@ -19,6 +19,11 @@
       "allowedVersions": "<7.0.0"
     },
     {
+      "description": "Nuxt 4 / Nitro 2 need h3 1.x; lift when Nuxt moves to Nitro 3",
+      "matchPackageNames": ["h3"],
+      "allowedVersions": "<2.0.0"
+    },
+    {
       "matchDatasources": ["java-version"],
       "matchDepNames": ["java"],
       "allowedVersions": "<=25"
