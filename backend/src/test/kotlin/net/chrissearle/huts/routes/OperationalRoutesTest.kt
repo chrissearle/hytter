@@ -14,6 +14,7 @@ import io.ktor.server.testing.testApplication
 import io.mockk.every
 import io.mockk.mockk
 import net.chrissearle.huts.config.DEVELOPMENT_VERSION
+import net.chrissearle.huts.monitoring.configureMonitoring
 import net.chrissearle.huts.testHytterApplication
 import java.sql.Connection
 import java.sql.SQLException
@@ -46,6 +47,16 @@ class OperationalRoutesTest :
 
                 response.status shouldBe HttpStatusCode.OK
                 response.body<VersionInfo>().version shouldBe DEVELOPMENT_VERSION
+            }
+        }
+
+        test("GET /metrics reports the build version") {
+            testApplication {
+                application { configureMonitoring() }
+
+                val body = client.get("/metrics").bodyAsText()
+
+                body shouldContain "app_build_info{version=\"$DEVELOPMENT_VERSION\"} 1"
             }
         }
 

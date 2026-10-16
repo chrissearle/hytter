@@ -267,6 +267,8 @@ jobs:
           context: frontend
           platforms: linux/amd64
           push: true
+          build-args: |
+            IMAGE_TAG=${{ env.SHORT_SHA_TAG }}
           tags: ${{ env.IMAGE_BASE }}:${{ env.SHORT_SHA_TAG }}-amd64
           cache-from: type=gha,scope=frontend-amd64
           cache-to: type=gha,mode=max,scope=frontend-amd64
@@ -297,6 +299,8 @@ jobs:
           context: frontend
           platforms: linux/arm64
           push: true
+          build-args: |
+            IMAGE_TAG=${{ env.SHORT_SHA_TAG }}
           tags: ${{ env.IMAGE_BASE }}:${{ env.SHORT_SHA_TAG }}-arm64
           cache-from: type=gha,scope=frontend-arm64
           cache-to: type=gha,mode=max,scope=frontend-arm64

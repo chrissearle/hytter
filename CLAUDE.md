@@ -109,8 +109,12 @@ GUI text should be in **Bokmål Norwegian**.
   Placeholder images until real photos are available.
 - **pnpm** (never npm), exact package versions.
 - **TypeScript** throughout — no `any`; ESLint + Prettier for linting/formatting.
+  ESLint runs Prettier through `eslint-plugin-prettier`, so `pnpm lint` fails on
+  formatting differences and `pnpm lint:fix` applies them. `pnpm format:check`
+  covers the non-code files and runs in `pr-frontend.yaml`.
 - **Husky + lint-staged** pre-commit hook running `pnpm lint:fix` on staged
-  `.js`/`.ts`/`.vue` files.
+  `.js`/`.mjs`/`.ts`/`.vue` files and `prettier --write` on staged Markdown,
+  JSON, CSS and YAML.
 
 ### Database
 
@@ -125,7 +129,28 @@ CPU, and Ktor HTTP request histograms via Micrometer), plus request-scoped
 call logging with an `X-Request-Id`-based call ID for log correlation. Pattern
 copied from `src/proxy`'s `Monitoring.kt`. `/metrics` is scraped in-cluster
 directly against the backend pod — it is **not** proxied through the
-frontend, unlike `/api`, `/login`, `/callback` and `/logout`.
+frontend, unlike `/api`, `/login`, `/callback` and `/logout`. It also exports
+`app_build_info{version}` (from `BuildInfo`), registered as a Prometheus `Info`
+metric: a Micrometer gauge with that name would be exported as `app_build`.
+Dashboard: "Ktor API + JVM".
+
+The frontend has its own metrics on port 9090 (`frontend/server/plugins/metrics.ts`,
+`runtimeConfig.metricsPort`), the same series as the other Nuxt apps:
+`app_build_info{version}` (from `NUXT_PUBLIC_IMAGE_TAG`, passed by CI as the
+`IMAGE_TAG` build arg) and `http_server_request_duration_seconds{method,route_group,status_code}`.
+Proxied requests are `route_group="backend"`, so their timing is the round trip
+through the backend. Each 404 is logged as `[404] <method> <path> from <referer>`.
+Dashboard: "Nuxt Apps", which counts only the Nuxt pods in the namespace.
+
+Umami analytics: `frontend/app/plugins/umami.client.ts` fetches
+`/api/_analytics` (`frontend/server/api/_analytics.get.ts`; under `/api/_` so
+the proxy doesn't forward it). That route answers with the frontend's
+`NUXT_UMAMI_WEBSITE_ID`, `NUXT_UMAMI_DOMAINS` (JSON array) and `NUXT_UMAMI_SRC`,
+set only on the production deployment, and with 204 when they're unset. The
+plugin also sends `error-<status>` events. Keep the `scripts.registry.umamiAnalytics`
+entry in `nuxt.config.ts` (`trigger: false, proxy: false, bundle: false`):
+without it `@nuxt/scripts` bundles Umami Cloud's script and sends to Umami
+Cloud. No hostnames or site ids in the code.
 
 ## Auth architecture (Keycloak)
 

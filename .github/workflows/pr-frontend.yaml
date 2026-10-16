@@ -45,6 +45,11 @@ jobs:
         run: pnpm lint
         working-directory: frontend
 
+      # ESLint covers js/ts/vue formatting; this catches the rest (md, json, css, yaml)
+      - name: Format check
+        run: pnpm format:check
+        working-directory: frontend
+
       - name: Typecheck
         run: pnpm typecheck
         working-directory: frontend

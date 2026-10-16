@@ -16,6 +16,8 @@ import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
+import io.prometheus.metrics.core.metrics.Info
+import net.chrissearle.huts.config.BuildInfo
 import org.slf4j.event.Level
 import java.util.UUID
 
@@ -36,6 +38,18 @@ fun Application.configureMonitoring() {
                 ProcessorMetrics(),
             )
     }
+
+    // Same series as the Nuxt apps, so dashboards can show and annotate what
+    // is deployed. A Prometheus Info metric rather than a Micrometer gauge:
+    // the registry treats _info as reserved and would export a gauge as
+    // app_build
+    Info
+        .builder()
+        .name("app_build_info")
+        .help("Deployed build, from the image tag; always 1")
+        .labelNames("version")
+        .register(appMicrometerRegistry.prometheusRegistry)
+        .setLabelValues(BuildInfo.version())
 
     install(CallLogging) {
         level = Level.INFO
