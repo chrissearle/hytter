@@ -22,7 +22,7 @@
     "@nuxt/ui": "4.12.0",
     "@prometheus-io/client": "0.16.1",
     "h3": "1.15.11",
-    "nuxt": "4.6.1",
+    "nuxt": "4.6.2",
     "tailwindcss": "4.3.3"
   },
   "devDependencies": {
