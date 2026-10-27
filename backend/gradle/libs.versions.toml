@@ -3,7 +3,7 @@ kotlin = "2.4.21"
 detekt = "2.0.0-alpha.6"
 kotlinter = "5.7.0"
 ktor = "3.6.0"
-logback = "1.6.6"
+log4j2 = "2.26.1"
 flyway = "13.11.1"
 postgresql = "42.7.14"
 kotlinx-datetime = "0.8.0"
@@ -31,7 +31,10 @@ ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging-jvm", ve
 ktor-server-metrics-micrometer = { module = "io.ktor:ktor-server-metrics-micrometer-jvm", version.ref = "ktor" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "prometheus" }
 kotlin-logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
-logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+log4j-api = { group = "org.apache.logging.log4j", name = "log4j-api", version.ref = "log4j2" }
+log4j-core = { group = "org.apache.logging.log4j", name = "log4j-core", version.ref = "log4j2" }
+log4j-layout-template-json = { group = "org.apache.logging.log4j", name = "log4j-layout-template-json", version.ref = "log4j2" }
+log4j-slf4j2-impl = { group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version.ref = "log4j2" }
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
 flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
@@ -50,6 +53,7 @@ testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgr
 testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter", version.ref = "testcontainers" }
 
 [bundles]
+logging = ["log4j-api", "log4j-core", "log4j-layout-template-json", "log4j-slf4j2-impl"]
 test = [
     "ktor-server-test-host",
     "ktor-client-mock",

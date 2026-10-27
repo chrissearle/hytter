@@ -29,7 +29,7 @@ dependencies {
     implementation(libs.ktor.server.metrics.micrometer)
     implementation(libs.micrometer.registry.prometheus)
     implementation(libs.kotlin.logging)
-    implementation(libs.logback.classic)
+    runtimeOnly(libs.bundles.logging)
     implementation(libs.flyway.core)
     implementation(libs.flyway.postgresql)
     implementation(libs.postgresql)
