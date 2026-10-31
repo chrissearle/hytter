@@ -6,7 +6,7 @@ ARG IMAGE_TAG
 ENV NUXT_PUBLIC_IMAGE_TAG=$IMAGE_TAG
 ENV CI=true
 
-RUN npm install -g pnpm@12.16.0
+RUN npm install -g pnpm@12.16.1
 
 WORKDIR /app
 
