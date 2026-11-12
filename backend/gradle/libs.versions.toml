@@ -12,7 +12,7 @@ arrow = "2.3.0"
 kotlinx-serialization = "1.13.0"
 kotlin-logging = "8.0.7"
 prometheus = "1.17.2"
-kotest = "6.2.6"
+kotest = "6.2.7"
 mockk = "1.14.12"
 testcontainers = "2.0.5"
 
