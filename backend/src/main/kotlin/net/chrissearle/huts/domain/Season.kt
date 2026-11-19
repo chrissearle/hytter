@@ -4,6 +4,7 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
+import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import kotlin.time.Clock
@@ -20,7 +21,7 @@ private const val DECEMBER = 12
  * only the fallback when it does not.
  */
 fun seasonStart(date: LocalDate): LocalDate {
-    val month = date.monthNumber
+    val month = date.month.number
 
     // Modulo 12 shifts December to 0, lining the quarters up so that integer
     // division picks the right one.
